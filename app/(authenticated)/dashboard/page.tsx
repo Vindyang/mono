@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Circle, CheckCircle2, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -129,16 +135,17 @@ export default function DashboardPage() {
     return acc;
   }, {} as Record<string, Record<string, Task[]>>);
 
-  const getStatusStyles = (status: string) => {
+
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case "todo":
-        return "bg-secondary text-secondary-foreground border border-transparent";
-      case "in_progress":
-        return "bg-background text-foreground border border-foreground";
       case "done":
-        return "bg-primary text-primary-foreground border border-primary";
+        return <CheckCircle2 className="h-5 w-5 text-primary" />;
+      case "in_progress":
+        return <Timer className="h-5 w-5 text-blue-500" />;
+      case "todo":
       default:
-        return "bg-secondary text-secondary-foreground";
+        return <Circle className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -274,7 +281,7 @@ export default function DashboardPage() {
                   {projectTasks.map((task, index) => (
                     <div
                       key={task.id}
-                      className="p-4 hover:bg-secondary/30 transition-colors flex items-start gap-4"
+                      className="p-4 hover:bg-secondary/30 transition-colors flex items-center gap-4 group/item"
                     >
                       {/* Grouping Indicator */}
                       {projectTasks.length > 1 && (
@@ -294,44 +301,58 @@ export default function DashboardPage() {
                       )}
 
                       <div
-                        className={`flex-1 flex items-start justify-between ${
+                        className={`flex-1 flex items-center justify-between ${
                           projectTasks.length > 1 ? "ml-10" : ""
                         }`}
                       >
-                        <div className="flex-1">
+                        {/* Status Icon */}
+                        <div className="mr-4 shrink-0">
+                          {getStatusIcon(task.status)}
+                        </div>
+
+                        <div className="flex-1 min-w-0 pr-4">
                           <div className="flex items-center gap-3">
-                            <h3 className="text-base font-medium text-foreground">
+                            <h3
+                              className={`text-base font-medium truncate ${
+                                task.status === "done"
+                                  ? "text-muted-foreground line-through"
+                                  : "text-foreground"
+                              }`}
+                            >
                               {task.title}
                             </h3>
+                            <PriorityBadge priority={task.priority} />
                           </div>
                           {task.description && (
-                            <p className="text-muted-foreground text-sm mt-1">
+                            <p className="text-muted-foreground text-sm mt-0.5 truncate">
                               {task.description}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyles(
-                                task.status
-                              )}`}
-                            >
-                              {task.status.replace("_", " ").toUpperCase()}
-                            </span>
-                            <PriorityBadge priority={task.priority} />
-                          </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm">
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50"
-                          >
-                            Delete
-                          </Button>
+                        <div className="flex items-center gap-4 shrink-0">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
