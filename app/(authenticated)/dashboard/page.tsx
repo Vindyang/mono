@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Filter, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,6 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PriorityBadge } from "@/components/ui/priority-badge";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import calendar from "dayjs/plugin/calendar";
+
+dayjs.extend(relativeTime);
+dayjs.extend(calendar);
 
 interface Task {
   id: string;
@@ -20,36 +27,60 @@ interface Task {
   priority: "low" | "medium" | "high" | null;
   due_date: string | null;
   created_at: string;
+  project?: string;
 }
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>([
+  const [tasks] = useState<Task[]>([
     {
       id: "1",
-      title: "Complete project documentation",
-      description: "Write comprehensive documentation for the todo app",
+      title: "Wireframe for Website Design",
+      description: "Create low-fidelity wireframes for the new landing page",
       status: "in_progress",
       priority: "high",
-      due_date: "2024-11-20",
+      due_date: dayjs().format("YYYY-MM-DD"),
       created_at: "2024-11-15",
+      project: "Website Redesign",
     },
     {
       id: "2",
-      title: "Review pull requests",
-      description: "Review and merge pending pull requests",
+      title: "Contact Us Page",
+      description: "Implement the contact form and map integration",
       status: "todo",
       priority: "medium",
-      due_date: "2024-11-18",
+      due_date: dayjs().format("YYYY-MM-DD"),
       created_at: "2024-11-14",
+      project: "Website Redesign",
     },
     {
       id: "3",
+      title: "Create Tool Tips for New User Flow",
+      description: "Add helpful tooltips for the onboarding process",
+      status: "done",
+      priority: "low",
+      due_date: dayjs().format("YYYY-MM-DD"),
+      created_at: "2024-11-13",
+      project: "Website Redesign",
+    },
+    {
+      id: "4",
+      title: "Payment Method Flow",
+      description: "Integrate Stripe payment gateway",
+      status: "todo",
+      priority: "high",
+      due_date: dayjs().format("YYYY-MM-DD"),
+      created_at: "2024-11-12",
+      project: "Mobile App Launch",
+    },
+    {
+      id: "5",
       title: "Update dependencies",
       description: "Update all npm packages to latest versions",
       status: "done",
       priority: "low",
-      due_date: null,
+      due_date: dayjs().add(1, "day").format("YYYY-MM-DD"),
       created_at: "2024-11-13",
+      project: "System Maintenance",
     },
   ]);
 
@@ -72,6 +103,32 @@ export default function DashboardPage() {
     return true;
   });
 
+  // Group tasks by Date -> Project
+  const groupedTasks = filteredTasks.reduce((acc, task) => {
+    const dateKey = task.due_date
+      ? dayjs(task.due_date).calendar(null, {
+          sameDay: "[Today], D MMM YYYY",
+          nextDay: "[Tomorrow], D MMM YYYY",
+          nextWeek: "dddd, D MMM YYYY",
+          lastDay: "[Yesterday], D MMM YYYY",
+          lastWeek: "[Last] dddd, D MMM YYYY",
+          sameElse: "D MMM YYYY",
+        })
+      : "No Due Date";
+
+    if (!acc[dateKey]) {
+      acc[dateKey] = {};
+    }
+
+    const projectKey = task.project || "No Project";
+    if (!acc[dateKey][projectKey]) {
+      acc[dateKey][projectKey] = [];
+    }
+
+    acc[dateKey][projectKey].push(task);
+    return acc;
+  }, {} as Record<string, Record<string, Task[]>>);
+
   const getStatusStyles = (status: string) => {
     switch (status) {
       case "todo":
@@ -85,173 +142,210 @@ export default function DashboardPage() {
     }
   };
 
-  const getPriorityStyles = (priority: string | null) => {
-    switch (priority) {
-      case "high":
-        return "font-bold underline decoration-2";
-      case "medium":
-        return "font-medium";
-      case "low":
-        return "font-normal text-muted-foreground";
-      default:
-        return "";
-    }
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6 w-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage your tasks efficiently</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-1 text-lg">
+            Manage your tasks efficiently
+          </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button size="lg" className="rounded-xl px-6">
+          <Plus className="mr-2 h-5 w-5" />
           New Task
         </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="bg-card p-6 rounded-lg border border-border">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Tasks</h3>
-          <p className="text-2xl font-bold text-foreground mt-2">{tasks.length}</p>
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <h3 className="text-base font-medium text-muted-foreground">
+            Total Tasks
+          </h3>
+          <p className="text-3xl font-bold text-foreground mt-2">
+            {tasks.length}
+          </p>
         </div>
-        <div className="bg-card p-6 rounded-lg border border-border">
-          <h3 className="text-sm font-medium text-muted-foreground">In Progress</h3>
-          <p className="text-2xl font-bold text-foreground mt-2">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <h3 className="text-base font-medium text-muted-foreground">
+            In Progress
+          </h3>
+          <p className="text-3xl font-bold text-foreground mt-2">
             {tasks.filter((t) => t.status === "in_progress").length}
           </p>
         </div>
-        <div className="bg-card p-6 rounded-lg border border-border">
-          <h3 className="text-sm font-medium text-muted-foreground">Completed</h3>
-          <p className="text-2xl font-bold text-foreground mt-2">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+          <h3 className="text-base font-medium text-muted-foreground">
+            Completed
+          </h3>
+          <p className="text-3xl font-bold text-foreground mt-2">
             {tasks.filter((t) => t.status === "done").length}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-card p-4 rounded-lg border border-border">
+      <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <div className="flex flex-col gap-4 md:flex-row md:items-center w-full">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
                 type="text"
                 placeholder="Search tasks..."
-                className="pl-10 w-full md:w-64"
+                className="pl-12 w-full h-10 text-base rounded-xl"
                 value={filters.search}
                 onChange={(e) =>
                   setFilters({ ...filters, search: e.target.value })
                 }
               />
             </div>
-            <Select
-              value={filters.status}
-              onValueChange={(value: string) =>
-                setFilters({ ...filters, status: value })
-              }
-            >
-              <SelectTrigger className="w-full md:w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="todo">Todo</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.priority}
-              onValueChange={(value: string) =>
-                setFilters({ ...filters, priority: value })
-              }
-            >
-              <SelectTrigger className="w-full md:w-32">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-4">
+              <Select
+                value={filters.status}
+                onValueChange={(value: string) =>
+                  setFilters({ ...filters, status: value })
+                }
+              >
+                <SelectTrigger className="w-[140px] h-10 rounded-xl">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="todo">Todo</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.priority}
+                onValueChange={(value: string) =>
+                  setFilters({ ...filters, priority: value })
+                }
+              >
+                <SelectTrigger className="w-[140px] h-10 rounded-xl">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priority</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Task List */}
-      <div className="bg-card rounded-lg border border-border">
-        <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Tasks</h2>
-        </div>
-        <div className="divide-y divide-border">
-          {filteredTasks.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              No tasks found matching your filters.
-            </div>
-          ) : (
-            filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-4 hover:bg-secondary/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground">{task.title}</h3>
-                    {task.description && (
-                      <p className="text-muted-foreground text-sm mt-1">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyles(
-                          task.status
-                        )}`}
-                      >
-                        {task.status.replace("_", " ").toUpperCase()}
+      <div className="space-y-6">
+        {Object.entries(groupedTasks).flatMap(([date, projects]) =>
+          Object.entries(projects).map(([project, projectTasks]) => (
+            <div
+              key={`${date}-${project}`}
+              className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
+            >
+              <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-foreground">{date}</h2>
+                  {project !== "No Project" && (
+                    <>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-lg font-medium text-primary">
+                        {project}
                       </span>
-                      {task.priority && (
-                        <span
-                          className={`text-xs ${getPriorityStyles(
-                            task.priority
-                          )}`}
-                        >
-                          {task.priority.toUpperCase()}
-                        </span>
-                      )}
-                      {task.due_date && (
-                        <span className="text-xs text-muted-foreground">
-                          Due: {new Date(task.due_date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50"
-                    >
-                      Delete
-                    </Button>
-                  </div>
+                    </>
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground font-medium">
+                  Totals:{" "}
+                  <span className="text-foreground ml-2 font-bold">
+                    {projectTasks.length} Tasks
+                  </span>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+              <div className="divide-y divide-border">
+                <div className="group relative">
+                  {projectTasks.map((task, index) => (
+                    <div
+                      key={task.id}
+                      className="p-4 hover:bg-secondary/30 transition-colors flex items-start gap-4"
+                    >
+                      {/* Grouping Indicator */}
+                      {projectTasks.length > 1 && (
+                        <div className="absolute left-4 top-4 bottom-4 w-8 flex flex-col items-center">
+                          {index === 0 && (
+                            <div className="w-6 h-6 rounded-md border-2 border-primary/20 flex items-center justify-center text-xs font-bold text-primary bg-background z-10">
+                              {projectTasks.length}
+                            </div>
+                          )}
+                          {index < projectTasks.length - 1 && (
+                            <div className="w-0.5 bg-primary/20 flex-1 my-1" />
+                          )}
+                          {index === projectTasks.length - 1 && (
+                            <div className="w-3 h-3 rounded-bl-lg border-l-2 border-b-2 border-primary/20 absolute top-0 left-1/2 -translate-x-1/2" />
+                          )}
+                        </div>
+                      )}
+
+                      <div
+                        className={`flex-1 flex items-start justify-between ${
+                          projectTasks.length > 1 ? "ml-10" : ""
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-base font-medium text-foreground">
+                              {task.title}
+                            </h3>
+                          </div>
+                          {task.description && (
+                            <p className="text-muted-foreground text-sm mt-1">
+                              {task.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyles(
+                                task.status
+                              )}`}
+                            >
+                              {task.status.replace("_", " ").toUpperCase()}
+                            </span>
+                            <PriorityBadge priority={task.priority} />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm">
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+        {Object.keys(groupedTasks).length === 0 && (
+          <div className="bg-card rounded-2xl border border-border p-8 text-center text-muted-foreground">
+            No tasks found matching your filters.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 import { Task } from "@/lib/types/task";
 import dayjs from "dayjs";
 
@@ -29,16 +30,18 @@ export function TaskCard({
 }: TaskCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const getPriorityStyles = (priority: string | null) => {
+
+
+  const getCardPriorityStyles = (priority: string | null) => {
     switch (priority) {
       case "high":
-        return "bg-background text-foreground border-foreground font-bold underline decoration-2";
+        return "border-l-priority-high bg-priority-high/5";
       case "medium":
-        return "bg-background text-foreground border-foreground font-medium";
+        return "border-l-priority-medium bg-priority-medium/5";
       case "low":
-        return "bg-background text-muted-foreground border-border font-normal";
+        return "border-l-priority-low bg-priority-low/5";
       default:
-        return "bg-background text-muted-foreground border-border";
+        return "border-l-transparent";
     }
   };
 
@@ -72,9 +75,9 @@ export function TaskCard({
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       onDragEnd={onDragEnd}
-      className={`bg-card border border-border p-3 hover:border-foreground transition-all duration-200 cursor-move ${
+      className={`bg-card border border-border p-3 hover:shadow-soft transition-all duration-200 cursor-move rounded-lg border-l-4 ${
         isDeleting ? "opacity-50 scale-95" : ""
-      } ${isOverdue() ? "border-l-2 border-l-destructive" : ""}`}
+      } ${getCardPriorityStyles(task.priority)}`}
     >
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
@@ -117,15 +120,7 @@ export function TaskCard({
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {task.priority && (
-            <span
-              className={`px-1.5 py-0.5 text-xs border ${getPriorityStyles(
-                task.priority
-              )}`}
-            >
-              {task.priority.toUpperCase()}
-            </span>
-          )}
+          <PriorityBadge priority={task.priority} />
         </div>
 
         {task.due_date && (
