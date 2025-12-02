@@ -1,7 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import { Calendar, Clock, Edit, Trash2, MoreVertical } from "lucide-react";
+import { Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { Task } from "@/lib/types/task";
-import dayjs from "dayjs";
 
 interface TaskCardProps {
   task: Task;
@@ -30,38 +27,6 @@ export function TaskCard({
 }: TaskCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
 
-
-
-  const getCardPriorityStyles = (priority: string | null) => {
-    switch (priority) {
-      case "high":
-        return "border-l-priority-high bg-priority-high/5";
-      case "medium":
-        return "border-l-priority-medium bg-priority-medium/5";
-      case "low":
-        return "border-l-priority-low bg-priority-low/5";
-      default:
-        return "border-l-transparent";
-    }
-  };
-
-  const isOverdue = () => {
-    if (!task.due_date) return false;
-    const dueDate = new Date(task.due_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return dueDate < today;
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      return dayjs(dateString).format("MMM DD, YYYY");
-    } catch {
-      return null;
-    }
-  };
-
   const handleDelete = async () => {
     setIsDeleting(true);
     // Add a small delay to show loading state
@@ -75,72 +40,53 @@ export function TaskCard({
       draggable
       onDragStart={(e) => onDragStart(e, task)}
       onDragEnd={onDragEnd}
-      className={`bg-card border border-border p-3 hover:shadow-soft transition-all duration-200 cursor-move rounded-lg border-l-4 ${
+      className={`bg-card border border-border p-4 hover:shadow-sm transition-all duration-200 cursor-move rounded-lg ${
         isDeleting ? "opacity-50 scale-95" : ""
-      } ${getCardPriorityStyles(task.priority)}`}
+      }`}
     >
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-foreground text-sm leading-tight flex-1">
-          {task.title}
-        </h4>
+      <div className="flex items-start justify-between mb-2 gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-medium text-foreground text-base leading-tight truncate">
+              {task.title}
+            </h4>
+            <PriorityBadge priority={task.priority} />
+          </div>
+          {task.description && (
+            <p className="text-muted-foreground text-sm line-clamp-2">
+              {task.description}
+            </p>
+          )}
+        </div>
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0 ml-2 hover:bg-secondary"
+              size="icon"
+              className="h-8 w-8 shrink-0"
             >
-              <MoreVertical className="h-3 w-3 text-muted-foreground" />
+              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-24">
+          <DropdownMenuContent align="end">
             <DropdownMenuItem
               onClick={() => onEdit(task)}
-              className="text-xs cursor-pointer text-foreground"
+              className="cursor-pointer"
             >
-              <Edit className="mr-2 h-3 w-3" />
+              <Pencil className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDelete}
-              className="text-xs text-destructive cursor-pointer focus:text-destructive"
+              className="text-destructive cursor-pointer focus:text-destructive"
             >
-              <Trash2 className="mr-2 h-3 w-3" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {task.description && (
-        <p className="text-muted-foreground text-xs mb-3 line-clamp-2">
-          {task.description}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <PriorityBadge priority={task.priority} />
-        </div>
-
-        {task.due_date && (
-          <div
-            className={`flex items-center gap-1 text-xs ${
-              isOverdue() ? "text-destructive" : "text-muted-foreground"
-            }`}
-          >
-            <Calendar className="h-3 w-3" />
-            <span>{formatDate(task.due_date)}</span>
-          </div>
-        )}
-      </div>
-
-      {isOverdue() && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-destructive">
-          <Clock className="h-3 w-3" />
-          <span>Overdue</span>
-        </div>
-      )}
     </div>
   );
 }

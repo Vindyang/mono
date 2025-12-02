@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +75,11 @@ export default function TasksPage() {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Filter tasks based on search and filters using useMemo
   const filteredTasks = useMemo(() => {
@@ -153,8 +158,12 @@ export default function TasksPage() {
     setEditingTask(null);
   };
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

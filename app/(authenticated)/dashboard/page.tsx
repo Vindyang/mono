@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, MoreHorizontal, Pencil, Trash2, Circle, CheckCircle2, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,58 +37,62 @@ interface Task {
 }
 
 export default function DashboardPage() {
-  const [tasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Wireframe for Website Design",
-      description: "Create low-fidelity wireframes for the new landing page",
-      status: "in_progress",
-      priority: "high",
-      due_date: dayjs().format("YYYY-MM-DD"),
-      created_at: "2024-11-15",
-      project: "Website Redesign",
-    },
-    {
-      id: "2",
-      title: "Contact Us Page",
-      description: "Implement the contact form and map integration",
-      status: "todo",
-      priority: "medium",
-      due_date: dayjs().format("YYYY-MM-DD"),
-      created_at: "2024-11-14",
-      project: "Website Redesign",
-    },
-    {
-      id: "3",
-      title: "Create Tool Tips for New User Flow",
-      description: "Add helpful tooltips for the onboarding process",
-      status: "done",
-      priority: "low",
-      due_date: dayjs().format("YYYY-MM-DD"),
-      created_at: "2024-11-13",
-      project: "Website Redesign",
-    },
-    {
-      id: "4",
-      title: "Payment Method Flow",
-      description: "Integrate Stripe payment gateway",
-      status: "todo",
-      priority: "high",
-      due_date: dayjs().format("YYYY-MM-DD"),
-      created_at: "2024-11-12",
-      project: "Mobile App Launch",
-    },
-    {
-      id: "5",
-      title: "Update dependencies",
-      description: "Update all npm packages to latest versions",
-      status: "done",
-      priority: "low",
-      due_date: dayjs().add(1, "day").format("YYYY-MM-DD"),
-      created_at: "2024-11-13",
-      project: "System Maintenance",
-    },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    setTasks([
+      {
+        id: "1",
+        title: "Wireframe for Website Design",
+        description: "Create low-fidelity wireframes for the new landing page",
+        status: "in_progress",
+        priority: "high",
+        due_date: dayjs().format("YYYY-MM-DD"),
+        created_at: "2024-11-15",
+        project: "Website Redesign",
+      },
+      {
+        id: "2",
+        title: "Contact Us Page",
+        description: "Implement the contact form and map integration",
+        status: "todo",
+        priority: "medium",
+        due_date: dayjs().format("YYYY-MM-DD"),
+        created_at: "2024-11-14",
+        project: "Website Redesign",
+      },
+      {
+        id: "3",
+        title: "Create Tool Tips for New User Flow",
+        description: "Add helpful tooltips for the onboarding process",
+        status: "done",
+        priority: "low",
+        due_date: dayjs().format("YYYY-MM-DD"),
+        created_at: "2024-11-13",
+        project: "Website Redesign",
+      },
+      {
+        id: "4",
+        title: "Payment Method Flow",
+        description: "Integrate Stripe payment gateway",
+        status: "todo",
+        priority: "high",
+        due_date: dayjs().format("YYYY-MM-DD"),
+        created_at: "2024-11-12",
+        project: "Mobile App Launch",
+      },
+      {
+        id: "5",
+        title: "Update dependencies",
+        description: "Update all npm packages to latest versions",
+        status: "done",
+        priority: "low",
+        due_date: dayjs().add(1, "day").format("YYYY-MM-DD"),
+        created_at: "2024-11-13",
+        project: "System Maintenance",
+      },
+    ]);
+  }, []);
 
   const [filters, setFilters] = useState({
     status: "all",

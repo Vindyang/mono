@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TaskCard } from "./task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Task } from "@/lib/types/task";
@@ -104,7 +104,7 @@ export function KanbanBoard({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-full min-h-0">
       {columns.map((column) => (
         <div
           key={column.id}
@@ -120,7 +120,7 @@ export function KanbanBoard({
           {/* Column Header */}
           <div className={`p-3 ${getColumnHeaderStyles(column.id)}`}>
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm tracking-wide text-foreground">
+              <h3 className="font-medium text-lg tracking-wide text-foreground">
                 {column.title}
               </h3>
               <span className="text-xs font-medium px-2 py-0.5 bg-background border border-border text-foreground rounded-full">
