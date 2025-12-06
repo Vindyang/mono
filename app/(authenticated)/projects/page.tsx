@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Folder, MoreHorizontal, Pencil, Trash2, Calendar, Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,8 +57,20 @@ const INITIAL_PROJECTS: (Project & {
   },
 ];
 
+import { NewProjectModal } from "@/components/projects/new-project-modal";
+
+// ... (existing imports)
+
 export default function ProjectsPage() {
   const [projects] = useState(INITIAL_PROJECTS);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration error due to dayjs/radix IDs
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full">
@@ -72,15 +84,13 @@ export default function ProjectsPage() {
             Manage and track your ongoing projects
           </p>
         </div>
-        <Button size="lg" className="rounded-xl px-6">
-          <Plus className="mr-2 h-5 w-5" />
-          New Project
-        </Button>
+        <NewProjectModal />
       </div>
 
       {/* Projects Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => {
+          // ... (existing mapped content)
           const progress = (project.completedTaskCount / project.taskCount) * 100;
           
           return (
@@ -164,16 +174,7 @@ export default function ProjectsPage() {
           );
         })}
 
-        {/* Create New Project Card (Alternative Entry) */}
-        <button className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5 rounded-2xl transition-all h-full min-h-[300px] gap-4 group text-muted-foreground hover:text-primary">
-          <div className="w-16 h-16 rounded-full bg-secondary group-hover:bg-background flex items-center justify-center transition-colors shadow-sm">
-            <Plus className="h-8 w-8" />
-          </div>
-          <div className="text-center">
-             <h3 className="font-semibold text-lg">Create New Project</h3>
-             <p className="text-sm mt-1 max-w-[200px]">Start a new initiative and invite your team</p>
-          </div>
-        </button>
+
       </div>
     </div>
   );
