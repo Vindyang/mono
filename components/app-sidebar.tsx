@@ -41,26 +41,8 @@ const data = {
     },
     {
       title: "Tasks",
-      url: "#",
+      url: "/tasks",
       icon: CheckSquare,
-      items: [
-        {
-          title: "All Tasks",
-          url: "/tasks",
-        },
-        {
-          title: "Active Tasks",
-          url: "/tasks/active",
-        },
-        {
-          title: "Completed Tasks",
-          url: "/tasks/completed",
-        },
-        {
-          title: "Overdue Tasks",
-          url: "/tasks/overdue",
-        },
-      ],
     },
     {
       title: "Projects",

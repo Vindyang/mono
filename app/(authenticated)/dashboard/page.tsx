@@ -1,25 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Circle, CheckCircle2, Timer, Filter, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TaskFilters } from "@/components/task-filters";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { PriorityBadge } from "@/components/ui/priority-badge";
+import { MoreHorizontal, Pencil, Trash2, CheckCircle2, Timer, Circle } from "lucide-react";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { Task } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
+import { useSearchParams } from "next/navigation";
 
 dayjs.extend(calendar);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
 
 // Sample data
 const INITIAL_PROJECTS: Project[] = [
@@ -31,6 +34,8 @@ const INITIAL_PROJECTS: Project[] = [
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
+  
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -122,24 +127,47 @@ export default function DashboardPage() {
     ]);
   }, []);
 
-  const [filters, setFilters] = useState({
-    status: "all",
-    priority: "all",
-    search: "",
-  });
+  const filteredTasks = useMemo(() => {
+    const search = searchParams.get("search")?.toLowerCase() || "";
+    const status = searchParams.get("status") || "all";
+    const priority = searchParams.get("priority") || "all";
+    const dueDate = searchParams.get("dueDate") || "all";
 
-  const filteredTasks = tasks.filter((task) => {
-    if (filters.status !== "all" && task.status !== filters.status)
-      return false;
-    if (filters.priority !== "all" && task.priority !== filters.priority)
-      return false;
-    if (
-      filters.search &&
-      !task.title.toLowerCase().includes(filters.search.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+    return tasks.filter((task) => {
+      // Search filter
+      if (
+        search &&
+        !task.title.toLowerCase().includes(search)
+      )
+        return false;
+
+      // Status filter
+      if (status !== "all" && task.status !== status)
+        return false;
+
+      // Priority filter
+      if (priority !== "all" && task.priority !== priority)
+        return false;
+
+      // Due Date filter
+      if (dueDate !== "all") {
+        if (!task.due_date) return false;
+        const taskDate = dayjs(task.due_date);
+        const today = dayjs();
+
+        if (dueDate === "today") {
+          if (!taskDate.isSame(today, "day")) return false;
+        } else if (dueDate === "week") {
+          if (!taskDate.isSame(today, "week")) return false;
+        } else if (dueDate === "overdue") {
+          // Overdue means strictly before today and not done
+          if (!taskDate.isBefore(today, "day") || task.status === "done") return false;
+        }
+      }
+
+      return true;
+    });
+  }, [tasks, searchParams]);
 
   // Group tasks by Date -> Project
   const groupedTasks = filteredTasks.reduce((acc, task) => {
@@ -233,99 +261,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center w-full">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Search tasks..."
-                className="pl-12 w-full h-10 text-base rounded-xl"
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters({ ...filters, search: e.target.value })
-                }
-              />
-            </div>
-            <div className="flex gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-10 rounded-xl border-dashed px-4">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Status
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === "all"}
-                    onCheckedChange={() => setFilters({ ...filters, status: "all" })}
-                  >
-                    All Statuses
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === "todo"}
-                    onCheckedChange={() => setFilters({ ...filters, status: "todo" })}
-                  >
-                    To Do
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === "in_progress"}
-                    onCheckedChange={() => setFilters({ ...filters, status: "in_progress" })}
-                  >
-                    In Progress
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === "done"}
-                    onCheckedChange={() => setFilters({ ...filters, status: "done" })}
-                  >
-                    Done
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-10 rounded-xl border-dashed px-4">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Priority
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={filters.priority === "all"}
-                    onCheckedChange={() => setFilters({ ...filters, priority: "all" })}
-                  >
-                    All Priorities
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.priority === "high"}
-                    onCheckedChange={() => setFilters({ ...filters, priority: "high" })}
-                  >
-                    High
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.priority === "medium"}
-                    onCheckedChange={() => setFilters({ ...filters, priority: "medium" })}
-                  >
-                    Medium
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.priority === "low"}
-                    onCheckedChange={() => setFilters({ ...filters, priority: "low" })}
-                  >
-                    Low
-                  </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TaskFilters />
 
       {/* Task List */}
       <div className="space-y-6">

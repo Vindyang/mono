@@ -1,22 +1,20 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
+import { TaskFilters } from "@/components/task-filters";
 import { KanbanBoard } from "./components/kanban-board";
 import { TaskModal } from "./components/task-modal";
-import { Task, TaskFilters } from "@/lib/types/task";
+import { Task } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
 import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import { useSearchParams } from "next/navigation";
+
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
 
 // Sample data
 const INITIAL_PROJECTS: Project[] = [
@@ -115,12 +113,9 @@ export default function TasksPage() {
   const [projects] = useState<Project[]>(INITIAL_PROJECTS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [filters, setFilters] = useState<TaskFilters>({
-    status: "all",
-    priority: "all",
-    search: "",
-  });
   const [mounted, setMounted] = useState(false);
+  
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -130,29 +125,50 @@ export default function TasksPage() {
 
   // Filter tasks based on search and filters using useMemo
   const filteredTasks = useMemo(() => {
+    const search = searchParams.get("search")?.toLowerCase() || "";
+    const status = searchParams.get("status") || "all";
+    const priority = searchParams.get("priority") || "all";
+    const dueDate = searchParams.get("dueDate") || "all";
+
     return tasks.filter((task) => {
       // Search filter
       if (
-        filters.search &&
-        !task.title.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !task.description?.toLowerCase().includes(filters.search.toLowerCase())
+        search &&
+        !task.title.toLowerCase().includes(search) &&
+        !task.description?.toLowerCase().includes(search)
       ) {
         return false;
       }
 
       // Status filter
-      if (filters.status !== "all" && task.status !== filters.status) {
+      if (status !== "all" && task.status !== status) {
         return false;
       }
 
       // Priority filter
-      if (filters.priority !== "all" && task.priority !== filters.priority) {
+      if (priority !== "all" && task.priority !== priority) {
         return false;
+      }
+
+      // Due Date filter
+      if (dueDate !== "all") {
+        if (!task.due_date) return false;
+        const taskDate = dayjs(task.due_date);
+        const today = dayjs();
+
+        if (dueDate === "today") {
+          if (!taskDate.isSame(today, "day")) return false;
+        } else if (dueDate === "week") {
+          if (!taskDate.isSame(today, "week")) return false;
+        } else if (dueDate === "overdue") {
+          // Overdue means strictly before today and not done
+          if (!taskDate.isBefore(today, "day") || task.status === "done") return false;
+        }
       }
 
       return true;
     });
-  }, [tasks, filters]);
+  }, [tasks, searchParams]);
 
   const handleCreateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
     const newTask: Task = {
@@ -221,95 +237,7 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tasks..."
-              className="pl-9 bg-background"
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 border-dashed">
-                  <Filter className="h-3.5 w-3.5 mr-2" />
-                  Status
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem
-                  checked={filters.status === "all"}
-                  onCheckedChange={() => setFilters({ ...filters, status: "all" })}
-                >
-                  All Statuses
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.status === "todo"}
-                  onCheckedChange={() => setFilters({ ...filters, status: "todo" })}
-                >
-                  To Do
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.status === "in_progress"}
-                  onCheckedChange={() => setFilters({ ...filters, status: "in_progress" })}
-                >
-                  In Progress
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.status === "done"}
-                  onCheckedChange={() => setFilters({ ...filters, status: "done" })}
-                >
-                  Done
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 border-dashed">
-                  <SlidersHorizontal className="h-3.5 w-3.5 mr-2" />
-                  Priority
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem
-                  checked={filters.priority === "all"}
-                  onCheckedChange={() => setFilters({ ...filters, priority: "all" })}
-                >
-                  All Priorities
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.priority === "high"}
-                  onCheckedChange={() => setFilters({ ...filters, priority: "high" })}
-                >
-                  High
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.priority === "medium"}
-                  onCheckedChange={() => setFilters({ ...filters, priority: "medium" })}
-                >
-                  Medium
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.priority === "low"}
-                  onCheckedChange={() => setFilters({ ...filters, priority: "low" })}
-                >
-                  Low
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+      <TaskFilters />
 
       {/* Kanban Board */}
       <KanbanBoard

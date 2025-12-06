@@ -25,4 +25,5 @@ export interface TaskFilters {
   status?: "todo" | "in_progress" | "done" | "all";
   priority?: "low" | "medium" | "high" | "all";
   search?: string;
+  dueDate?: string;
 }
