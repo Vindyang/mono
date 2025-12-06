@@ -46,22 +46,8 @@ const data = {
     },
     {
       title: "Projects",
-      url: "#",
+      url: "/projects",
       icon: FolderOpen,
-      items: [
-        {
-          title: "All Projects",
-          url: "/projects",
-        },
-        {
-          title: "Create Project",
-          url: "/projects/new",
-        },
-        {
-          title: "Project Templates",
-          url: "/projects/templates",
-        },
-      ],
     },
     {
       title: "Calendar",
