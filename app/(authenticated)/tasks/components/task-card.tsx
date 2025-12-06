@@ -12,16 +12,12 @@ import { Task } from "@/lib/types/task";
 
 interface TaskCardProps {
   task: Task;
-  onDragStart: (e: React.DragEvent, task: Task) => void;
-  onDragEnd: () => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
 }
 
 export function TaskCard({
   task,
-  onDragStart,
-  onDragEnd,
   onEdit,
   onDelete,
 }: TaskCardProps) {
@@ -37,9 +33,6 @@ export function TaskCard({
 
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, task)}
-      onDragEnd={onDragEnd}
       className={`bg-card border border-border p-4 hover:shadow-sm transition-all duration-200 cursor-move rounded-lg ${
         isDeleting ? "opacity-50 scale-95" : ""
       }`}

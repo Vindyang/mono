@@ -1,13 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  useDroppable,
+  PointerSensor,
+  KeyboardSensor,
+  closestCorners,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent,
+  defaultDropAnimationSideEffects,
+  DropAnimation,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { Task } from "@/lib/types/task";
+import { SortableTaskCard } from "./sortable-task-card";
 import { TaskCard } from "./task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Task } from "@/lib/types/task";
 
 interface KanbanBoardProps {
   tasks: Task[];
-  onStatusChange: (taskId: string, newStatus: Task["status"]) => void;
+  onTasksChange: (tasks: Task[]) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
 }
@@ -15,134 +36,62 @@ interface KanbanBoardProps {
 interface Column {
   id: Task["status"];
   title: string;
-  tasks: Task[];
 }
 
-export function KanbanBoard({
+function KanbanColumn({
+  column,
   tasks,
-  onStatusChange,
   onEdit,
   onDelete,
-}: KanbanBoardProps) {
-  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<Task["status"] | null>(
-    null
-  );
-
-  const columns: Column[] = [
-    {
-      id: "todo",
-      title: "To Do",
-      tasks: tasks.filter((task) => task.status === "todo"),
+}: {
+  column: Column;
+  tasks: Task[];
+  onEdit: (t: Task) => void;
+  onDelete: (id: string) => void;
+}) {
+  const { setNodeRef } = useDroppable({
+    id: column.id,
+    data: {
+      type: "Column",
+      column,
     },
-    {
-      id: "in_progress",
-      title: "In Progress",
-      tasks: tasks.filter((task) => task.status === "in_progress"),
-    },
-    {
-      id: "done",
-      title: "Done",
-      tasks: tasks.filter((task) => task.status === "done"),
-    },
-  ];
-
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
-    setDraggedTask(task);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragOver = (e: React.DragEvent, columnId: Task["status"]) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDragOverColumn(columnId);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverColumn(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, columnId: Task["status"]) => {
-    e.preventDefault();
-    setDragOverColumn(null);
-
-    if (draggedTask && draggedTask.status !== columnId) {
-      onStatusChange(draggedTask.id, columnId);
-    }
-    setDraggedTask(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedTask(null);
-    setDragOverColumn(null);
-  };
-
-  const getColumnStyles = (columnId: Task["status"]) => {
-    switch (columnId) {
-      case "todo":
-        return "border-border bg-card/50";
-      case "in_progress":
-        return "border-border bg-card/50";
-      case "done":
-        return "border-border bg-card/50";
-      default:
-        return "border-border bg-card/50";
-    }
-  };
-
-  const getColumnHeaderStyles = (columnId: Task["status"]) => {
-    switch (columnId) {
-      case "todo":
-        return "text-foreground bg-secondary/50 border-b border-border";
-      case "in_progress":
-        return "text-foreground bg-secondary/50 border-b border-border";
-      case "done":
-        return "text-foreground bg-secondary/50 border-b border-border";
-      default:
-        return "text-foreground bg-secondary/50 border-b border-border";
-    }
-  };
+  });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-full min-h-0">
-      {columns.map((column) => (
-        <div
-          key={column.id}
-          className={`border ${getColumnStyles(column.id)} ${
-            dragOverColumn === column.id
-              ? "ring-1 ring-offset-1 ring-ring"
-              : ""
-          } transition-all duration-200 flex flex-col rounded-lg overflow-hidden`}
-          onDragOver={(e) => handleDragOver(e, column.id)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, column.id)}
-        >
-          {/* Column Header */}
-          <div className={`p-3 ${getColumnHeaderStyles(column.id)}`}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-lg tracking-wide text-foreground">
-                {column.title}
-              </h3>
-              <span className="text-xs font-medium px-2 py-0.5 bg-background border border-border text-foreground rounded-full">
-                {column.tasks.length}
-              </span>
-            </div>
-          </div>
+    <div
+      ref={setNodeRef}
+      className="border border-border bg-card/50 transition-all duration-200 flex flex-col rounded-lg overflow-hidden h-full"
+    >
+      {/* Column Header */}
+      <div className="p-3 text-foreground bg-secondary/50 border-b border-border">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium text-lg tracking-wide text-foreground">
+            {column.title}
+          </h3>
+          <span className="text-xs font-medium px-2 py-0.5 bg-background border border-border text-foreground rounded-full">
+            {tasks.length}
+          </span>
+        </div>
+      </div>
 
-          {/* Column Content */}
-          <ScrollArea className="flex-1 p-3">
-            <div className="space-y-2">
-              {column.tasks.length === 0 ? (
+      {/* Column Content */}
+      <div className="flex-1 p-3 min-h-0 flex flex-col">
+        <SortableContext
+          id={column.id}
+          items={tasks.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ScrollArea className="flex-1">
+            <div className="space-y-2 pb-4 min-h-[100px]">
+              {tasks.length === 0 ? (
                 <div className="text-center text-muted-foreground py-12">
                   <p className="text-xs">No tasks</p>
                 </div>
               ) : (
-                column.tasks.map((task) => (
-                  <TaskCard
+                tasks.map((task) => (
+                  <SortableTaskCard
                     key={task.id}
                     task={task}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
                     onEdit={onEdit}
                     onDelete={onDelete}
                   />
@@ -150,8 +99,185 @@ export function KanbanBoard({
               )}
             </div>
           </ScrollArea>
-        </div>
-      ))}
+        </SortableContext>
+      </div>
     </div>
+  );
+}
+
+export function KanbanBoard({
+  tasks,
+  onTasksChange,
+  onEdit,
+  onDelete,
+}: KanbanBoardProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const columns: Column[] = [
+    { id: "todo", title: "To Do" },
+    { id: "in_progress", title: "In Progress" },
+    { id: "done", title: "Done" },
+  ];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor)
+  );
+
+  const columnTasks = useMemo(() => {
+    const tasksByColumn: Record<string, Task[]> = {
+      todo: [],
+      in_progress: [],
+      done: [],
+    };
+
+    tasks.forEach((task) => {
+      if (tasksByColumn[task.status]) {
+        tasksByColumn[task.status].push(task);
+      }
+    });
+
+    return tasksByColumn;
+  }, [tasks]);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveId(active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    // console.log("DragOver", active.id, "Over", over.id);
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const isActiveTask = active.data.current?.type === "Task";
+    const isOverTask = over.data.current?.type === "Task";
+
+    if (!isActiveTask) return;
+
+    // Dropping a Task over another Task
+    if (isActiveTask && isOverTask) {
+      const activeTask = tasks.find((t) => t.id === activeId);
+      const overTask = tasks.find((t) => t.id === overId);
+
+      if (activeTask && overTask && activeTask.status !== overTask.status) {
+        const activeIndex = tasks.findIndex((t) => t.id === activeId);
+        const overIndex = tasks.findIndex((t) => t.id === overId);
+
+        if (tasks[activeIndex].status !== tasks[overIndex].status) {
+          const newTasks = [...tasks];
+          newTasks[activeIndex] = {
+            ...newTasks[activeIndex],
+            status: tasks[overIndex].status,
+          };
+          onTasksChange(
+            arrayMove(
+              newTasks,
+              activeIndex,
+              overIndex - (activeIndex < overIndex ? 1 : 0)
+            )
+          );
+        }
+      } else if (
+        activeTask &&
+        overTask &&
+        activeTask.status === overTask.status
+      ) {
+        const activeIndex = tasks.findIndex((t) => t.id === activeId);
+        const overIndex = tasks.findIndex((t) => t.id === overId);
+        onTasksChange(arrayMove(tasks, activeIndex, overIndex));
+      }
+    }
+
+    // Dropping a Task over a Column
+    const isOverColumn = columns.some((col) => col.id === overId);
+    if (isActiveTask && isOverColumn) {
+      const activeTask = tasks.find((t) => t.id === activeId);
+      if (activeTask && activeTask.status !== overId) {
+        const activeIndex = tasks.findIndex((t) => t.id === activeId);
+        const newTasks = [...tasks];
+        newTasks[activeIndex] = {
+          ...newTasks[activeIndex],
+          status: overId as Task["status"],
+        };
+        onTasksChange(arrayMove(newTasks, activeIndex, newTasks.length - 1));
+      }
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const activeIndex = tasks.findIndex((t) => t.id === activeId);
+    const overIndex = tasks.findIndex((t) => t.id === overId);
+
+    if (
+      activeIndex !== -1 &&
+      overIndex !== -1 &&
+      tasks[activeIndex].status === tasks[overIndex].status
+    ) {
+      onTasksChange(arrayMove(tasks, activeIndex, overIndex));
+    }
+  };
+
+  const dropAnimation: DropAnimation = {
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: "0.5",
+        },
+      },
+    }),
+  };
+
+  const activeTask = useMemo(
+    () => tasks.find((t) => t.id === activeId),
+    [activeId, tasks]
+  );
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-full min-h-0">
+        {columns.map((column) => (
+          <KanbanColumn
+            key={column.id}
+            column={column}
+            tasks={columnTasks[column.id]}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+
+      <DragOverlay dropAnimation={dropAnimation}>
+        {activeTask ? (
+          <div className="pointer-events-none cursor-grabbing">
+            <TaskCard
+                task={activeTask}
+                onEdit={onEdit}
+                onDelete={onDelete}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

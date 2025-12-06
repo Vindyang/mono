@@ -194,11 +194,32 @@ export default function TasksPage() {
     setIsModalOpen(false);
   };
 
-  const handleStatusChange = (taskId: string, newStatus: Task["status"]) => {
-    const updatedTasks = tasks.map((t) =>
-      t.id === taskId ? { ...t, status: newStatus, updated_at: new Date().toISOString() } : t
-    );
-    setTasks(updatedTasks);
+
+
+  const handleTasksChange = (newFilteredTasks: Task[]) => {
+    setTasks((currentTasks) => {
+      const filteredIds = new Set(filteredTasks.map(t => t.id));
+      const indices: number[] = [];
+      
+      currentTasks.forEach((t, i) => {
+        if (filteredIds.has(t.id)) {
+          indices.push(i);
+        }
+      });
+
+      if (indices.length !== newFilteredTasks.length) {
+         // Fallback to updating by properties if index alignment fails
+         const newTasksMap = new Map(newFilteredTasks.map(t => [t.id, t]));
+         return currentTasks.map(t => newTasksMap.get(t.id) || t);
+      }
+
+      const nextTasks = [...currentTasks];
+      indices.forEach((originalIndex, i) => {
+        nextTasks[originalIndex] = newFilteredTasks[i];
+      });
+
+      return nextTasks;
+    });
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -242,7 +263,7 @@ export default function TasksPage() {
       {/* Kanban Board */}
       <KanbanBoard
         tasks={filteredTasks}
-        onStatusChange={handleStatusChange}
+        onTasksChange={setTasks}
         onEdit={openEditModal}
         onDelete={handleDeleteTask}
       />
