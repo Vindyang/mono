@@ -1,95 +1,123 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Circle, CheckCircle2, Timer } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Circle, CheckCircle2, Timer, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import calendar from "dayjs/plugin/calendar";
+import { Task } from "@/lib/types/task";
+import { Project } from "@/lib/types/project";
 
-dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-interface Task {
-  id: string;
-  title: string;
-  description: string | null;
-  status: "todo" | "in_progress" | "done";
-  priority: "low" | "medium" | "high" | null;
-  due_date: string | null;
-  created_at: string;
-  project?: string;
-}
+// Sample data
+const INITIAL_PROJECTS: Project[] = [
+  { id: "proj_web", name: "Website Redesign", color: "#3b82f6" },
+  { id: "proj_app", name: "Mobile App Launch", color: "#8b5cf6" },
+  { id: "proj_mkt", name: "Q4 Marketing Campaign", color: "#10b981" },
+];
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    // Simulate fetching tasks
     setTasks([
+      // Website Redesign Tasks
       {
         id: "1",
-        title: "Wireframe for Website Design",
-        description: "Create low-fidelity wireframes for the new landing page",
+        title: "Design System Audit",
+        description: "Review current components and identify inconsistencies",
+        status: "done",
+        priority: "high",
+        due_date: dayjs().format("YYYY-MM-DD"), // Today
+        projectId: "proj_web",
+        created_at: "2023-11-20",
+        updated_at: "2023-11-25",
+      },
+      {
+        id: "1b",
+        title: "Update Color Palette",
+        description: "Refine primary and secondary colors for better contrast",
+        status: "todo",
+        priority: "medium",
+        due_date: dayjs().format("YYYY-MM-DD"), // Today
+        projectId: "proj_web",
+        created_at: "2023-11-21",
+        updated_at: "2023-11-25",
+      },
+      {
+        id: "1c",
+        title: "Fix Navigation Bug",
+        description: "Menu doesn't close on mobile click",
         status: "in_progress",
         priority: "high",
-        due_date: dayjs().format("YYYY-MM-DD"),
-        created_at: "2024-11-15",
-        project: "Website Redesign",
+        due_date: dayjs().format("YYYY-MM-DD"), // Today
+        projectId: "proj_web",
+        created_at: "2023-11-22",
+        updated_at: "2023-11-25",
+      },
+      {
+        id: "1d",
+        title: "Optimize Images",
+        description: "Compress hero images for faster load time",
+        status: "todo",
+        priority: "low",
+        due_date: dayjs().format("YYYY-MM-DD"), // Today
+        projectId: "proj_web",
+        created_at: "2023-11-23",
+        updated_at: "2023-11-25",
       },
       {
         id: "2",
-        title: "Contact Us Page",
-        description: "Implement the contact form and map integration",
-        status: "todo",
-        priority: "medium",
-        due_date: dayjs().format("YYYY-MM-DD"),
-        created_at: "2024-11-14",
-        project: "Website Redesign",
+        title: "Homepage Hero Section",
+        description: "Design and implement the new hero section with 3D elements",
+        status: "in_progress",
+        priority: "high",
+        due_date: dayjs().add(1, 'day').format("YYYY-MM-DD"), // Tomorrow
+        projectId: "proj_web",
+        created_at: "2023-11-28",
+        updated_at: "2023-11-29",
       },
-      {
-        id: "3",
-        title: "Create Tool Tips for New User Flow",
-        description: "Add helpful tooltips for the onboarding process",
-        status: "done",
-        priority: "low",
-        due_date: dayjs().format("YYYY-MM-DD"),
-        created_at: "2024-11-13",
-        project: "Website Redesign",
-      },
+
+      // Mobile App Launch Tasks
       {
         id: "4",
-        title: "Payment Method Flow",
-        description: "Integrate Stripe payment gateway",
-        status: "todo",
+        title: "Push Notification Setup",
+        description: "Configure Firebase Cloud Messaging for iOS and Android",
+        status: "in_progress",
         priority: "high",
-        due_date: dayjs().format("YYYY-MM-DD"),
-        created_at: "2024-11-12",
-        project: "Mobile App Launch",
+        due_date: dayjs().format("YYYY-MM-DD"), // Today (2nd task for today)
+        projectId: "proj_app",
+        created_at: "2023-11-25",
+        updated_at: "2023-11-27",
       },
+
+      // Q4 Marketing Campaign Tasks
       {
-        id: "5",
-        title: "Update dependencies",
-        description: "Update all npm packages to latest versions",
-        status: "done",
-        priority: "low",
-        due_date: dayjs().add(1, "day").format("YYYY-MM-DD"),
-        created_at: "2024-11-13",
-        project: "System Maintenance",
+        id: "7",
+        title: "Social Media Calendar",
+        description: "Plan posts for Instagram, LinkedIn, and Twitter",
+        status: "todo",
+        priority: "medium",
+        due_date: dayjs().add(3, 'day').format("YYYY-MM-DD"), // Next Week (approx)
+        projectId: "proj_mkt",
+        created_at: "2023-11-15",
+        updated_at: "2023-11-29",
       },
     ]);
   }, []);
@@ -130,16 +158,17 @@ export default function DashboardPage() {
       acc[dateKey] = {};
     }
 
-    const projectKey = task.project || "No Project";
-    if (!acc[dateKey][projectKey]) {
-      acc[dateKey][projectKey] = [];
+    // Find project name from ID
+    const project = INITIAL_PROJECTS.find(p => p.id === task.projectId);
+    const projectName = project ? project.name : "No Project";
+
+    if (!acc[dateKey][projectName]) {
+      acc[dateKey][projectName] = [];
     }
 
-    acc[dateKey][projectKey].push(task);
+    acc[dateKey][projectName].push(task);
     return acc;
   }, {} as Record<string, Record<string, Task[]>>);
-
-
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -152,6 +181,10 @@ export default function DashboardPage() {
         return <Circle className="h-5 w-5 text-muted-foreground" />;
     }
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="space-y-6 p-4 md:p-6 w-full">
@@ -216,38 +249,79 @@ export default function DashboardPage() {
               />
             </div>
             <div className="flex gap-4">
-              <Select
-                value={filters.status}
-                onValueChange={(value: string) =>
-                  setFilters({ ...filters, status: value })
-                }
-              >
-                <SelectTrigger className="w-[140px] h-10 rounded-xl">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="todo">Todo</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.priority}
-                onValueChange={(value: string) =>
-                  setFilters({ ...filters, priority: value })
-                }
-              >
-                <SelectTrigger className="w-[140px] h-10 rounded-xl">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10 rounded-xl border-dashed px-4">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Status
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === "all"}
+                    onCheckedChange={() => setFilters({ ...filters, status: "all" })}
+                  >
+                    All Statuses
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === "todo"}
+                    onCheckedChange={() => setFilters({ ...filters, status: "todo" })}
+                  >
+                    To Do
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === "in_progress"}
+                    onCheckedChange={() => setFilters({ ...filters, status: "in_progress" })}
+                  >
+                    In Progress
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === "done"}
+                    onCheckedChange={() => setFilters({ ...filters, status: "done" })}
+                  >
+                    Done
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10 rounded-xl border-dashed px-4">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Priority
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={filters.priority === "all"}
+                    onCheckedChange={() => setFilters({ ...filters, priority: "all" })}
+                  >
+                    All Priorities
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.priority === "high"}
+                    onCheckedChange={() => setFilters({ ...filters, priority: "high" })}
+                  >
+                    High
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.priority === "medium"}
+                    onCheckedChange={() => setFilters({ ...filters, priority: "medium" })}
+                  >
+                    Medium
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.priority === "low"}
+                    onCheckedChange={() => setFilters({ ...filters, priority: "low" })}
+                  >
+                    Low
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -285,79 +359,70 @@ export default function DashboardPage() {
                   {projectTasks.map((task, index) => (
                     <div
                       key={task.id}
-                      className="p-4 hover:bg-secondary/30 transition-colors flex items-center gap-4 group/item"
+                      className="relative p-4 hover:bg-secondary/30 transition-colors flex items-center gap-4 group/item"
                     >
                       {/* Grouping Indicator */}
                       {projectTasks.length > 1 && (
-                        <div className="absolute left-4 top-4 bottom-4 w-8 flex flex-col items-center">
-                          {index === 0 && (
-                            <div className="w-6 h-6 rounded-md border-2 border-primary/20 flex items-center justify-center text-xs font-bold text-primary bg-background z-10">
-                              {projectTasks.length}
-                            </div>
-                          )}
-                          {index < projectTasks.length - 1 && (
-                            <div className="w-0.5 bg-primary/20 flex-1 my-1" />
-                          )}
-                          {index === projectTasks.length - 1 && (
-                            <div className="w-3 h-3 rounded-bl-lg border-l-2 border-b-2 border-primary/20 absolute top-0 left-1/2 -translate-x-1/2" />
+                        <div className="absolute left-0 top-0 bottom-0 w-16 flex flex-col items-center">
+                          {index === 0 ? (
+                            <>
+                              <div className="w-6 h-6 mt-4 rounded-md border-2 border-primary/20 flex items-center justify-center text-xs font-bold text-primary bg-background z-10">
+                                {projectTasks.length}
+                              </div>
+                              <div className="w-0.5 bg-primary/20 flex-1 -mt-1" />
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-0.5 bg-primary/20 h-full absolute top-0 left-1/2 -translate-x-1/2" style={{ height: index === projectTasks.length - 1 ? 'calc(50% - 0.5rem)' : '100%' }} />
+                              <div className="absolute top-1/2 left-1/2 w-4 h-4 border-b-2 border-l-2 border-primary/20 rounded-bl-xl -translate-y-1/2 -ml-px" />
+                            </>
                           )}
                         </div>
                       )}
 
-                      <div
-                        className={`flex-1 flex items-center justify-between ${
-                          projectTasks.length > 1 ? "ml-10" : ""
-                        }`}
-                      >
-                        {/* Status Icon */}
-                        <div className="mr-4 shrink-0">
-                          {getStatusIcon(task.status)}
-                        </div>
-
-                        <div className="flex-1 min-w-0 pr-4">
+                      <div className={`flex-1 ${projectTasks.length > 1 ? "pl-16" : ""}`}>
+                        <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-3">
-                            <h3
-                              className={`text-base font-medium truncate ${
-                                task.status === "done"
-                                  ? "text-muted-foreground line-through"
-                                  : "text-foreground"
-                              }`}
-                            >
+                            <h3 className="font-medium text-foreground">
                               {task.title}
                             </h3>
-                            <PriorityBadge priority={task.priority} />
+                            <div className="flex items-center gap-1.5">
+                              {getStatusIcon(task.status)}
+                              <span className="capitalize text-xs text-muted-foreground">
+                                {task.status.replace("_", " ")}
+                              </span>
+                            </div>
                           </div>
-                          {task.description && (
-                            <p className="text-muted-foreground text-sm mt-0.5 truncate">
-                              {task.description}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {task.priority && (
+                              <PriorityBadge priority={task.priority} />
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 transition-opacity"
+                                >
+                                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
-
-                        <div className="flex items-center gap-4 shrink-0">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive focus:text-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-1 mb-3">
+                          {task.description}
+                        </p>
                       </div>
                     </div>
                   ))}

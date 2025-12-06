@@ -1,161 +1,203 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { Plus, Search } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Search, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { KanbanBoard } from "./components/kanban-board";
 import { TaskModal } from "./components/task-modal";
-import { Task } from "@/lib/types/task";
+import { Task, TaskFilters } from "@/lib/types/task";
+import { Project } from "@/lib/types/project";
+import dayjs from "dayjs";
+
+// Sample data
+const INITIAL_PROJECTS: Project[] = [
+  { id: "proj_web", name: "Website Redesign", color: "#3b82f6" },
+  { id: "proj_app", name: "Mobile App Launch", color: "#8b5cf6" },
+  { id: "proj_mkt", name: "Q4 Marketing Campaign", color: "#10b981" },
+];
+
+const INITIAL_TASKS: Task[] = [
+  // Website Redesign Tasks
+  {
+    id: "1",
+    title: "Design System Audit",
+    description: "Review current components and identify inconsistencies",
+    status: "done",
+    priority: "high",
+    due_date: dayjs().format("YYYY-MM-DD"), // Today
+    projectId: "proj_web",
+    created_at: "2023-11-20",
+    updated_at: "2023-11-25",
+  },
+  {
+    id: "1b",
+    title: "Update Color Palette",
+    description: "Refine primary and secondary colors for better contrast",
+    status: "todo",
+    priority: "medium",
+    due_date: dayjs().format("YYYY-MM-DD"), // Today
+    projectId: "proj_web",
+    created_at: "2023-11-21",
+    updated_at: "2023-11-25",
+  },
+  {
+    id: "1c",
+    title: "Fix Navigation Bug",
+    description: "Menu doesn't close on mobile click",
+    status: "in_progress",
+    priority: "high",
+    due_date: dayjs().format("YYYY-MM-DD"), // Today
+    projectId: "proj_web",
+    created_at: "2023-11-22",
+    updated_at: "2023-11-25",
+  },
+  {
+    id: "1d",
+    title: "Optimize Images",
+    description: "Compress hero images for faster load time",
+    status: "todo",
+    priority: "low",
+    due_date: dayjs().format("YYYY-MM-DD"), // Today
+    projectId: "proj_web",
+    created_at: "2023-11-23",
+    updated_at: "2023-11-25",
+  },
+  {
+    id: "2",
+    title: "Homepage Hero Section",
+    description: "Design and implement the new hero section with 3D elements",
+    status: "in_progress",
+    priority: "high",
+    due_date: dayjs().add(1, 'day').format("YYYY-MM-DD"), // Tomorrow
+    projectId: "proj_web",
+    created_at: "2023-11-28",
+    updated_at: "2023-11-29",
+  },
+
+  // Mobile App Launch Tasks
+  {
+    id: "4",
+    title: "Push Notification Setup",
+    description: "Configure Firebase Cloud Messaging for iOS and Android",
+    status: "in_progress",
+    priority: "high",
+    due_date: dayjs().format("YYYY-MM-DD"), // Today (2nd task for today)
+    projectId: "proj_app",
+    created_at: "2023-11-25",
+    updated_at: "2023-11-27",
+  },
+
+  // Q4 Marketing Campaign Tasks
+  {
+    id: "7",
+    title: "Social Media Calendar",
+    description: "Plan posts for Instagram, LinkedIn, and Twitter",
+    status: "todo",
+    priority: "medium",
+    due_date: dayjs().add(3, 'day').format("YYYY-MM-DD"), // Next Week (approx)
+    projectId: "proj_mkt",
+    created_at: "2023-11-15",
+    updated_at: "2023-11-29",
+  },
+];
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Design new landing page",
-      description: "Create a modern, responsive landing page design",
-      status: "todo",
-      priority: "high",
-      due_date: "2024-11-25",
-      created_at: "2024-11-15T10:00:00Z",
-      updated_at: "2024-11-15T10:00:00Z",
-    },
-    {
-      id: "2",
-      title: "Implement user authentication",
-      description: "Add login and signup functionality with Supabase",
-      status: "in_progress",
-      priority: "high",
-      due_date: "2024-11-20",
-      created_at: "2024-11-14T09:00:00Z",
-      updated_at: "2024-11-16T14:30:00Z",
-    },
-    {
-      id: "3",
-      title: "Write API documentation",
-      description: "Document all API endpoints and usage examples",
-      status: "done",
-      priority: "medium",
-      due_date: null,
-      created_at: "2024-11-13T08:00:00Z",
-      updated_at: "2024-11-17T16:00:00Z",
-    },
-    {
-      id: "4",
-      title: "Setup CI/CD pipeline",
-      description: "Configure automated testing and deployment",
-      status: "todo",
-      priority: "low",
-      due_date: "2024-11-30",
-      created_at: "2024-11-12T07:00:00Z",
-      updated_at: "2024-11-12T07:00:00Z",
-    },
-    {
-      id: "5",
-      title: "Optimize database queries",
-      description: "Improve performance of slow database queries",
-      status: "in_progress",
-      priority: "medium",
-      due_date: "2024-11-22",
-      created_at: "2024-11-11T06:00:00Z",
-      updated_at: "2024-11-15T12:00:00Z",
-    },
-  ]);
-  const [filters, setFilters] = useState({
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects] = useState<Project[]>(INITIAL_PROJECTS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [filters, setFilters] = useState<TaskFilters>({
     status: "all",
     priority: "all",
     search: "",
   });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+    setTasks(INITIAL_TASKS);
   }, []);
 
   // Filter tasks based on search and filters using useMemo
   const filteredTasks = useMemo(() => {
-    let filtered = tasks;
+    return tasks.filter((task) => {
+      // Search filter
+      if (
+        filters.search &&
+        !task.title.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !task.description?.toLowerCase().includes(filters.search.toLowerCase())
+      ) {
+        return false;
+      }
 
-    if (filters.search) {
-      filtered = filtered.filter(
-        (task) =>
-          task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-          (task.description &&
-            task.description
-              .toLowerCase()
-              .includes(filters.search.toLowerCase()))
-      );
-    }
+      // Status filter
+      if (filters.status !== "all" && task.status !== filters.status) {
+        return false;
+      }
 
-    if (filters.priority !== "all") {
-      filtered = filtered.filter((task) => task.priority === filters.priority);
-    }
+      // Priority filter
+      if (filters.priority !== "all" && task.priority !== filters.priority) {
+        return false;
+      }
 
-    return filtered;
+      return true;
+    });
   }, [tasks, filters]);
 
-  const handleCreateTask = (
-    taskData: Omit<Task, "id" | "created_at" | "updated_at">
-  ) => {
+  const handleCreateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
     const newTask: Task = {
-      ...taskData,
-      id: Date.now().toString(),
+      ...data,
+      id: Math.random().toString(36).substr(2, 9),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setTasks([...tasks, newTask]);
+    setTasks([newTask, ...tasks]);
     setIsModalOpen(false);
   };
 
-  const handleUpdateTask = (
-    taskData: Omit<Task, "id" | "created_at" | "updated_at">
-  ) => {
-    if (editingTask) {
-      const updatedTask: Task = {
-        ...taskData,
-        id: editingTask.id,
-        created_at: editingTask.created_at,
-        updated_at: new Date().toISOString(),
-      };
-      setTasks(
-        tasks.map((task) => (task.id === editingTask.id ? updatedTask : task))
-      );
-      setEditingTask(null);
-      setIsModalOpen(false);
-    }
-  };
+  const handleUpdateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+    if (!editingTask) return;
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks(tasks.filter((task) => task.id !== taskId));
+    const updatedTasks = tasks.map((t) =>
+      t.id === editingTask.id
+        ? { ...t, ...data, updated_at: new Date().toISOString() }
+        : t
+    );
+    setTasks(updatedTasks);
+    setEditingTask(null);
+    setIsModalOpen(false);
   };
 
   const handleStatusChange = (taskId: string, newStatus: Task["status"]) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId
-          ? { ...task, status: newStatus, updated_at: new Date().toISOString() }
-          : task
-      )
+    const updatedTasks = tasks.map((t) =>
+      t.id === taskId ? { ...t, status: newStatus, updated_at: new Date().toISOString() } : t
     );
+    setTasks(updatedTasks);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const updatedTasks = tasks.filter((t) => t.id !== taskId);
+    setTasks(updatedTasks);
+  };
+
+  const openCreateModal = () => {
+    setEditingTask(null);
+    setIsModalOpen(true);
   };
 
   const openEditModal = (task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingTask(null);
   };
 
   if (!mounted) {
@@ -167,50 +209,105 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Tasks
-          </h1>
-          <p className="text-muted-foreground mt-1">Organize your work</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tasks</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage and track your tasks efficiently
+          </p>
         </div>
-        <Button
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={openCreateModal} className="shadow-sm">
+          <Plus className="h-4 w-4 mr-2" />
           New Task
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="bg-card p-4 rounded-lg border border-border">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <div className="bg-card p-4 rounded-lg border border-border shadow-sm">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              type="text"
-              placeholder="Search"
-              className="pl-10 w-full md:w-64"
+              placeholder="Search tasks..."
+              className="pl-9 bg-background"
               value={filters.search}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             />
           </div>
-          <Select
-            value={filters.priority}
-            onValueChange={(value: string) =>
-              setFilters({ ...filters, priority: value })
-            }
-          >
-            <SelectTrigger className="w-full md:w-32">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
+          
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 border-dashed">
+                  <Filter className="h-3.5 w-3.5 mr-2" />
+                  Status
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={filters.status === "all"}
+                  onCheckedChange={() => setFilters({ ...filters, status: "all" })}
+                >
+                  All Statuses
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={filters.status === "todo"}
+                  onCheckedChange={() => setFilters({ ...filters, status: "todo" })}
+                >
+                  To Do
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={filters.status === "in_progress"}
+                  onCheckedChange={() => setFilters({ ...filters, status: "in_progress" })}
+                >
+                  In Progress
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={filters.status === "done"}
+                  onCheckedChange={() => setFilters({ ...filters, status: "done" })}
+                >
+                  Done
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 border-dashed">
+                  <SlidersHorizontal className="h-3.5 w-3.5 mr-2" />
+                  Priority
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Filter by priority</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={filters.priority === "all"}
+                  onCheckedChange={() => setFilters({ ...filters, priority: "all" })}
+                >
+                  All Priorities
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={filters.priority === "high"}
+                  onCheckedChange={() => setFilters({ ...filters, priority: "high" })}
+                >
+                  High
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={filters.priority === "medium"}
+                  onCheckedChange={() => setFilters({ ...filters, priority: "medium" })}
+                >
+                  Medium
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={filters.priority === "low"}
+                  onCheckedChange={() => setFilters({ ...filters, priority: "low" })}
+                >
+                  Low
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -225,8 +322,9 @@ export default function TasksPage() {
       {/* Task Modal */}
       <TaskModal
         isOpen={isModalOpen}
-        onClose={closeModal}
+        onClose={() => setIsModalOpen(false)}
         task={editingTask}
+        projects={projects}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
       />
     </div>

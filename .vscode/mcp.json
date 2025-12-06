@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"my-mcp-server-96cb7730": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"shadcn@latest",
+				"mcp"
+			]
+		}
+	},
+	"inputs": []
+}
