@@ -12,101 +12,12 @@ import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
+import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
-// Sample data
-const INITIAL_PROJECTS: Project[] = [
-  { id: "proj_web", name: "Website Redesign", color: "#3b82f6" },
-  { id: "proj_app", name: "Mobile App Launch", color: "#8b5cf6" },
-  { id: "proj_mkt", name: "Q4 Marketing Campaign", color: "#10b981" },
-];
-
-const INITIAL_TASKS: Task[] = [
-  // Website Redesign Tasks
-  {
-    id: "1",
-    title: "Design System Audit",
-    description: "Review current components and identify inconsistencies",
-    status: "done",
-    priority: "high",
-    due_date: dayjs().format("YYYY-MM-DD"), // Today
-    projectId: "proj_web",
-    created_at: "2023-11-20",
-    updated_at: "2023-11-25",
-  },
-  {
-    id: "1b",
-    title: "Update Color Palette",
-    description: "Refine primary and secondary colors for better contrast",
-    status: "todo",
-    priority: "medium",
-    due_date: dayjs().format("YYYY-MM-DD"), // Today
-    projectId: "proj_web",
-    created_at: "2023-11-21",
-    updated_at: "2023-11-25",
-  },
-  {
-    id: "1c",
-    title: "Fix Navigation Bug",
-    description: "Menu doesn't close on mobile click",
-    status: "in_progress",
-    priority: "high",
-    due_date: dayjs().format("YYYY-MM-DD"), // Today
-    projectId: "proj_web",
-    created_at: "2023-11-22",
-    updated_at: "2023-11-25",
-  },
-  {
-    id: "1d",
-    title: "Optimize Images",
-    description: "Compress hero images for faster load time",
-    status: "todo",
-    priority: "low",
-    due_date: dayjs().format("YYYY-MM-DD"), // Today
-    projectId: "proj_web",
-    created_at: "2023-11-23",
-    updated_at: "2023-11-25",
-  },
-  {
-    id: "2",
-    title: "Homepage Hero Section",
-    description: "Design and implement the new hero section with 3D elements",
-    status: "in_progress",
-    priority: "high",
-    due_date: dayjs().add(1, 'day').format("YYYY-MM-DD"), // Tomorrow
-    projectId: "proj_web",
-    created_at: "2023-11-28",
-    updated_at: "2023-11-29",
-  },
-
-  // Mobile App Launch Tasks
-  {
-    id: "4",
-    title: "Push Notification Setup",
-    description: "Configure Firebase Cloud Messaging for iOS and Android",
-    status: "in_progress",
-    priority: "high",
-    due_date: dayjs().format("YYYY-MM-DD"), // Today (2nd task for today)
-    projectId: "proj_app",
-    created_at: "2023-11-25",
-    updated_at: "2023-11-27",
-  },
-
-  // Q4 Marketing Campaign Tasks
-  {
-    id: "7",
-    title: "Social Media Calendar",
-    description: "Plan posts for Instagram, LinkedIn, and Twitter",
-    status: "todo",
-    priority: "medium",
-    due_date: dayjs().add(3, 'day').format("YYYY-MM-DD"), // Next Week (approx)
-    projectId: "proj_mkt",
-    created_at: "2023-11-15",
-    updated_at: "2023-11-29",
-  },
-];
+// Sample data replaced by imports
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -129,6 +40,7 @@ export default function TasksPage() {
     const status = searchParams.get("status") || "all";
     const priority = searchParams.get("priority") || "all";
     const dueDate = searchParams.get("dueDate") || "all";
+    const projectId = searchParams.get("projectId") || "all";
 
     return tasks.filter((task) => {
       // Search filter
@@ -137,6 +49,11 @@ export default function TasksPage() {
         !task.title.toLowerCase().includes(search) &&
         !task.description?.toLowerCase().includes(search)
       ) {
+        return false;
+      }
+
+      // Project filter
+      if (projectId !== "all" && task.projectId !== projectId) {
         return false;
       }
 
@@ -242,7 +159,7 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6">
+    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

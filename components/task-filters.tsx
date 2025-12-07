@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Filter, SlidersHorizontal, Calendar } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, Calendar, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
+import { INITIAL_PROJECTS } from "@/lib/data";
 
 export function TaskFilters() {
   const searchParams = useSearchParams();
@@ -42,6 +43,7 @@ export function TaskFilters() {
   const currentStatus = searchParams.get("status") || "all";
   const currentPriority = searchParams.get("priority") || "all";
   const currentDueDate = searchParams.get("dueDate") || "all";
+  const currentProjectId = searchParams.get("projectId") || "all";
 
   return (
     <div className="bg-card p-4 rounded-2xl border border-border shadow-sm">
@@ -166,6 +168,34 @@ export function TaskFilters() {
                 >
                   Overdue
                 </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-10 rounded-xl border-dashed px-4">
+                  <Folder className="h-4 w-4 mr-2" />
+                  Project
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Filter by project</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  checked={currentProjectId === "all"}
+                  onCheckedChange={() => handleFilterChange("projectId", "all")}
+                >
+                  All Projects
+                </DropdownMenuCheckboxItem>
+                {INITIAL_PROJECTS.map((project) => (
+                  <DropdownMenuCheckboxItem
+                    key={project.id}
+                    checked={currentProjectId === project.id}
+                    onCheckedChange={() => handleFilterChange("projectId", project.id)}
+                  >
+                    {project.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -16,46 +16,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
+import { INITIAL_PROJECTS } from "@/lib/data";
 
-// Sample Data
-const INITIAL_PROJECTS: (Project & { 
-    description: string; 
-    taskCount: number; 
-    completedTaskCount: number; 
-    dueDate: string;
-    members: string[]; 
-})[] = [
-  { 
-    id: "proj_web", 
-    name: "Website Redesign", 
-    color: "#3b82f6",
-    description: "Complete overhaul of the corporate website including new branding and improved UX.",
-    taskCount: 12,
-    completedTaskCount: 8,
-    dueDate: dayjs().add(2, 'week').format("YYYY-MM-DD"),
-    members: ["https://i.pravatar.cc/150?u=1", "https://i.pravatar.cc/150?u=2", "https://i.pravatar.cc/150?u=3"]
-  },
-  { 
-    id: "proj_app", 
-    name: "Mobile App Launch", 
-    color: "#8b5cf6",
-    description: "Development and launch of the new iOS and Android mobile applications.",
-    taskCount: 24,
-    completedTaskCount: 10,
-    dueDate: dayjs().add(1, 'month').format("YYYY-MM-DD"),
-    members: ["https://i.pravatar.cc/150?u=4", "https://i.pravatar.cc/150?u=1"]
-  },
-  { 
-    id: "proj_mkt", 
-    name: "Q4 Marketing Campaign", 
-    color: "#10b981",
-    description: "Strategic marketing campaign for Q4 including social media, email, and ads.",
-    taskCount: 18,
-    completedTaskCount: 2,
-    dueDate: dayjs().add(3, 'week').format("YYYY-MM-DD"),
-    members: ["https://i.pravatar.cc/150?u=5", "https://i.pravatar.cc/150?u=2", "https://i.pravatar.cc/150?u=6", "https://i.pravatar.cc/150?u=7"]
-  },
-];
+// Sample Data moved to lib/data.ts
 
 import { NewProjectModal } from "@/components/projects/new-project-modal";
 
@@ -73,7 +36,7 @@ export default function ProjectsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto w-full">
+    <div className="space-y-6 w-full p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
