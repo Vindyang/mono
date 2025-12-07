@@ -130,11 +130,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                             </p>
                         )}
                     </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg px-3">
-                            View
-                        </Button>
-                    </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg px-3" asChild>
+                                <Link href={`/tasks/${task.id}`}>
+                                    View
+                                </Link>
+                            </Button>
+                        </div>
                 </div>
                 ))
             ) : (
