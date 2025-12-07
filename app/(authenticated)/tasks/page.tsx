@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskFilters } from "@/components/task-filters";
@@ -19,7 +19,7 @@ dayjs.extend(isSameOrAfter);
 
 // Sample data replaced by imports
 
-export default function TasksPage() {
+function TasksContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects] = useState<Project[]>(INITIAL_PROJECTS);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -194,5 +194,13 @@ export default function TasksPage() {
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
       />
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TasksContent />
+    </Suspense>
   );
 }

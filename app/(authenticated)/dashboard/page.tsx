@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskFilters } from "@/components/task-filters";
@@ -31,7 +31,7 @@ const INITIAL_PROJECTS: Project[] = [
   { id: "proj_mkt", name: "Q4 Marketing Campaign", color: "#10b981" },
 ];
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
   
@@ -374,5 +374,13 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }

@@ -28,9 +28,10 @@ interface TaskModalProps {
   task?: Task | null;
   projects: Project[];
   onSubmit: (data: Omit<Task, "id" | "created_at" | "updated_at">) => void;
+  initialDate?: string;
 }
 
-export function TaskModal({ isOpen, onClose, task, projects, onSubmit }: TaskModalProps) {
+export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDate }: TaskModalProps) {
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
     description: "",
@@ -62,13 +63,13 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit }: TaskMod
         description: "",
         status: "todo",
         priority: "medium",
-        dueDate: undefined,
+        dueDate: initialDate ? new Date(initialDate) : undefined,
         image: null,
         projectId: projects.length > 0 ? projects[0].id : "",
       });
     }
     setErrors({});
-  }, [task, isOpen, projects]);
+  }, [task, isOpen, projects, initialDate]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

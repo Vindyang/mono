@@ -10,6 +10,10 @@ import {
   Users,
   HelpCircle,
   ChevronRight,
+  Home,
+  Inbox,
+  Search,
+  Hash,
 } from "lucide-react";
 
 import {
@@ -45,15 +49,16 @@ const data = {
       icon: CheckSquare,
     },
     {
-      title: "Projects",
-      url: "/projects",
-      icon: FolderOpen,
-    },
-    {
       title: "Calendar",
       url: "/calendar",
       icon: Calendar,
     },
+    {
+      title: "Projects",
+      url: "/projects",
+      icon: FolderOpen,
+    },
+
     {
       title: "Analytics",
       url: "#",
