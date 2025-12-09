@@ -32,16 +32,21 @@ function Calendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center w-full",
+        caption: "flex justify-center pt-8 relative items-center w-full mb-8",
         caption_label: "text-sm font-medium w-full",
         nav: "hidden",
-        table: "w-full border-collapse space-y-1",
-        weekdays: "flex",
-        weekday: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+        table: "flex flex-col w-full space-y-1",
+        head: "flex flex-col w-full",
+        head_row: "flex w-full mb-2 border-b border-border pb-2",
+        weekdays: "flex w-full border-b border-border pb-2 mb-2",
+        weekday: "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] align-top",
+        head_cell: "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] align-top border-b border-border pb-2",
+        tbody: "flex flex-col w-full",
         week: "flex w-full mt-2",
+        row: "flex w-full mt-2",
         day: cn(
-          "h-6 w-6 text-xs p-0 font-normal aria-selected:opacity-100",
-          buttonVariants({ variant: "ghost" })
+          buttonVariants({ variant: "ghost" }),
+          "h-6 w-6 text-xs p-0 font-normal aria-selected:opacity-100"
         ),
         day_range_end: "day-range-end",
         day_selected:
@@ -55,15 +60,17 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
+      formatters={formatters}
       components={{
+
         Nav: () => <></>,
         CaptionLabel: ({ ...props }) => {
             const { goToMonth, nextMonth, previousMonth, months } = useDayPicker()
             const date = months?.[0]?.date || new Date()
   
             return (
-              <div className="flex justify-between items-center w-full">
-                 <span className="text-sm font-semibold truncate pl-2">{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+              <div className="flex justify-between items-center w-full pt-6 pb-4 border-b border-border mb-4">
+                 <span className="text-xl font-semibold truncate pl-2">{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
                  <div className="flex items-center gap-1 pr-2">
                   <Button
                     variant="outline"

@@ -68,7 +68,7 @@ function CustomDayContent(props: any) {
   return (
       <div className="w-full h-full flex flex-col gap-1.5" onClick={() => context.onDayClick(day)}>
               <span className={cn(
-                  "text-sm font-medium h-7 w-7 flex items-center justify-center rounded-full ml-1 mt-1",
+                  "text-xs font-medium h-6 w-6 flex items-center justify-center rounded-full ml-1 mt-1",
                   dayjs(day).isSame(dayjs(), 'day') ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               )}>
                   {day.getDate()}
@@ -192,8 +192,6 @@ export function CalendarView({
             caption_label: "text-lg font-semibold",
             // Removed legacy manual positioning for nav buttons
             table: "w-full flex-1 border-l border-t border-gray-200",
-            head_row: "flex w-full shrink-0",
-            head_cell: "flex-1 text-muted-foreground font-normal text-sm uppercase tracking-wider text-center py-3 bg-muted/5 border-r border-b border-gray-200 last:border-r-0",
             row: "flex w-full flex-1 min-h-0",
             week: "flex w-full flex-1 min-h-0", // Ensure rows expand
             tbody: "flex-1 w-full",
