@@ -88,9 +88,7 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
       newErrors.description = "Description must be less than 1000 characters";
     }
 
-    if (formData.dueDate && formData.dueDate < new Date()) {
-      newErrors.dueDate = "Due date must be in the future";
-    }
+
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
