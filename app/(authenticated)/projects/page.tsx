@@ -32,14 +32,14 @@ export default function ProjectsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="space-y-6 w-full p-4 md:p-6">
+    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Projects
           </h1>
-          <p className="text-muted-foreground mt-1 text-lg">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage and track your ongoing projects
           </p>
         </div>

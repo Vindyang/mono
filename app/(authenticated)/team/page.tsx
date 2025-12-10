@@ -6,6 +6,7 @@ import { INITIAL_TEAM_MEMBERS } from "@/lib/data";
 export default function TeamPage() {
   return (
     <div className="space-y-6">
+
       <TeamStats 
         totalMembers={INITIAL_TEAM_MEMBERS.length}
         activeMembers={INITIAL_TEAM_MEMBERS.filter(m => m.status === 'active').length}

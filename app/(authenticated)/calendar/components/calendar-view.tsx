@@ -168,7 +168,7 @@ export function CalendarView({
 
   return (
     <CalendarContext.Provider value={{ tasks, projects, currentDate, onDayClick: handleDayClick, onTaskClick: handleTaskClick, getProjectColor }}>
-    <div className="flex flex-col h-full gap-4 p-4">
+    <div className="flex flex-col h-full">
       <div className="flex-1 overflow-hidden bg-background border rounded-lg shadow-sm">
         <Calendar
           mode="single"

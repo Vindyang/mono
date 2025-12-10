@@ -36,7 +36,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const progress = (project.completedTaskCount / project.taskCount) * 100;
 
   return (
-    <div className="flex flex-col gap-6 w-full p-4 md:p-6">
+    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
       {/* Back Button */}
       <div>
         <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-foreground text-muted-foreground group">

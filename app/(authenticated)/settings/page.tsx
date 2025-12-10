@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,11 +20,21 @@ import { Github, Slack, Figma } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SettingsPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="px-1">
-        <h3 className="text-lg font-medium">Settings</h3>
-        <p className="text-sm text-muted-foreground">
+    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Manage your workspace preferences and account details.
         </p>
       </div>
