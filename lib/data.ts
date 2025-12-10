@@ -128,3 +128,77 @@ export const INITIAL_TASKS: Task[] = [
     updated_at: "2023-11-29",
   },
 ];
+
+import { TeamMember, Invitation } from "@/lib/types/team";
+
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: "user_1",
+    name: "Alex Johnson",
+    email: "alex.j@example.com",
+    role: "Owner",
+    avatarUrl: "https://i.pravatar.cc/150?u=1",
+    status: "active",
+    joinedAt: "2023-01-15",
+    projects: ["proj_web", "proj_app"],
+  },
+  {
+    id: "user_2",
+    name: "Sarah Williams",
+    email: "sarah.w@example.com",
+    role: "Admin",
+    avatarUrl: "https://i.pravatar.cc/150?u=2",
+    status: "active",
+    joinedAt: "2023-02-10",
+    projects: ["proj_web", "proj_app", "proj_mkt"],
+  },
+  {
+    id: "user_3",
+    name: "Michael Chen",
+    email: "michael.c@example.com",
+    role: "Member",
+    avatarUrl: "https://i.pravatar.cc/150?u=3",
+    status: "offline",
+    joinedAt: "2023-03-22",
+    projects: ["proj_web"],
+  },
+  {
+    id: "user_4",
+    name: "Emily Davis",
+    email: "emily.d@example.com",
+    role: "Member",
+    avatarUrl: "https://i.pravatar.cc/150?u=4",
+    status: "busy",
+    joinedAt: "2023-04-05",
+    projects: ["proj_app"],
+  },
+  {
+    id: "user_5",
+    name: "David Wilson",
+    email: "david.w@example.com",
+    role: "Viewer",
+    avatarUrl: "https://i.pravatar.cc/150?u=5",
+    status: "active",
+    joinedAt: "2023-05-18",
+    projects: ["proj_mkt"],
+  },
+];
+
+export const INITIAL_INVITATIONS: Invitation[] = [
+  {
+    id: "inv_1",
+    email: "jessica.lee@example.com",
+    role: "Member",
+    status: "pending",
+    invitedBy: "Alex Johnson",
+    invitedAt: dayjs().subtract(2, 'day').format("YYYY-MM-DD"),
+  },
+  {
+    id: "inv_2",
+    email: "robert.brown@example.com",
+    role: "Viewer",
+    status: "pending",
+    invitedBy: "Sarah Williams",
+    invitedAt: dayjs().subtract(5, 'hour').format("YYYY-MM-DD"),
+  },
+];

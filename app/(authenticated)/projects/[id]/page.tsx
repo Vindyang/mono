@@ -10,6 +10,9 @@ import Link from "next/link";
 import dayjs from "dayjs";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MemberList } from "@/app/(authenticated)/team/components/member-list";
+import { INITIAL_TEAM_MEMBERS } from "@/lib/data";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   // Use `use` to resolve params which is now a promise in newer Next.js versions, 
@@ -89,63 +92,80 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* Tasks List - Consistent Card Style */}
-      <div className="flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
-          <h2 className="font-semibold text-lg">Project Tasks</h2>
-          <span className="text-xs font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full">
-            {projectTasks.length}
-          </span>
-        </div>
-        
-        <div className="divide-y divide-border">
-            {projectTasks.length > 0 ? (
-                projectTasks.map((task) => (
-                <div key={task.id} className="p-4 flex items-start gap-4 hover:bg-secondary/30 transition-colors group">
-                    <div className="mt-1">
-                        {task.status === 'done' ? (
-                            <CheckCircle2 className="h-5 w-5 text-foreground" />
-                        ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                        )}
-                    </div>
-                    <div className="flex-1 space-y-1.5">
-                        <h3 className={`font-medium text-foreground leading-tight ${task.status === 'done' ? 'text-muted-foreground line-through' : ''}`}>
-                            {task.title}
-                        </h3>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="font-mono">{task.id}</span>
-                            <span>•</span>
-                            <span className="capitalize">{task.priority} Priority</span>
-                            {task.due_date && (
-                                <>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="members">Members</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="mt-6">
+            {/* Tasks List - Consistent Card Style */}
+            <div className="flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
+                    <h2 className="font-semibold text-lg">Project Tasks</h2>
+                    <span className="text-xs font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full">
+                        {projectTasks.length}
+                    </span>
+                </div>
+                
+                <div className="divide-y divide-border">
+                    {projectTasks.length > 0 ? (
+                        projectTasks.map((task) => (
+                        <div key={task.id} className="p-4 flex items-start gap-4 hover:bg-secondary/30 transition-colors group">
+                            <div className="mt-1">
+                                {task.status === 'done' ? (
+                                    <CheckCircle2 className="h-5 w-5 text-foreground" />
+                                ) : (
+                                    <Circle className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                )}
+                            </div>
+                            <div className="flex-1 space-y-1.5">
+                                <h3 className={`font-medium text-foreground leading-tight ${task.status === 'done' ? 'text-muted-foreground line-through' : ''}`}>
+                                    {task.title}
+                                </h3>
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                    <span className="font-mono">{task.id}</span>
                                     <span>•</span>
-                                    <span>Due {dayjs(task.due_date).format("MMM D")}</span>
-                                </>
-                            )}
+                                    <span className="capitalize">{task.priority} Priority</span>
+                                    {task.due_date && (
+                                        <>
+                                            <span>•</span>
+                                            <span>Due {dayjs(task.due_date).format("MMM D")}</span>
+                                        </>
+                                    )}
+                                </div>
+                                {task.description && (
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                        {task.description}
+                                    </p>
+                                )}
+                            </div>
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg px-3" asChild>
+                                        <Link href={`/tasks/${task.id}`}>
+                                            View
+                                        </Link>
+                                    </Button>
+                                </div>
                         </div>
-                        {task.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                                {task.description}
-                            </p>
-                        )}
-                    </div>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg px-3" asChild>
-                                <Link href={`/tasks/${task.id}`}>
-                                    View
-                                </Link>
-                            </Button>
+                        ))
+                    ) : (
+                        <div className="p-12 text-center text-muted-foreground">
+                            No tasks found for this project.
                         </div>
+                    )}
                 </div>
-                ))
-            ) : (
-                <div className="p-12 text-center text-muted-foreground">
-                    No tasks found for this project.
+            </div>
+        </TabsContent>
+        <TabsContent value="members" className="mt-6">
+             <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold">Project Members</h2>
                 </div>
-            )}
-        </div>
-      </div>
+                {/* Reusing MemberList with a subset of members for demo purposes since we don't have real relations yet */}
+                 <MemberList members={INITIAL_TEAM_MEMBERS.slice(0, 3)} hideProjects={true} />
+             </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

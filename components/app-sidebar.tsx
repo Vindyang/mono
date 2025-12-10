@@ -14,6 +14,7 @@ import {
   Inbox,
   Search,
   Hash,
+  type LucideIcon,
 } from "lucide-react";
 
 import {
@@ -36,7 +37,17 @@ import {
 } from "@/components/ui/collapsible";
 
 // This is sample data for the todo app sidebar
-const data = {
+const data: {
+  navMain: {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+    items?: {
+      title: string;
+      url: string;
+    }[];
+  }[];
+} = {
   navMain: [
     {
       title: "Dashboard",
@@ -66,50 +77,13 @@ const data = {
     },
     {
       title: "Team",
-      url: "#",
+      url: "/team",
       icon: Users,
-      items: [
-        {
-          title: "Members",
-          url: "/team",
-        },
-        {
-          title: "Invitations",
-          url: "/team/invitations",
-        },
-        {
-          title: "Roles & Permissions",
-          url: "/team/roles",
-        },
-      ],
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: Settings,
-      items: [
-        {
-          title: "General",
-          url: "/settings",
-        },
-        {
-          title: "Notifications",
-          url: "/settings/notifications",
-        },
-        {
-          title: "Integrations",
-          url: "/settings/integrations",
-        },
-        {
-          title: "Account",
-          url: "/settings/account",
-        },
-      ],
-    },
-    {
-      title: "Help & Support",
-      url: "/help",
-      icon: HelpCircle,
     },
   ],
 };

@@ -16,13 +16,9 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
+
 import { INITIAL_PROJECTS } from "@/lib/data";
-
-// Sample Data moved to lib/data.ts
-
-import { NewProjectModal } from "@/components/projects/new-project-modal";
-
-// ... (existing imports)
+import { NewProjectModal } from "@/app/(authenticated)/projects/components/new-project-modal";
 
 export default function ProjectsPage() {
   const [projects] = useState(INITIAL_PROJECTS);
