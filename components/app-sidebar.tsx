@@ -61,22 +61,8 @@ const data = {
 
     {
       title: "Analytics",
-      url: "#",
+      url: "/analytics",
       icon: BarChart3,
-      items: [
-        {
-          title: "Overview",
-          url: "/analytics",
-        },
-        {
-          title: "Productivity",
-          url: "/analytics/productivity",
-        },
-        {
-          title: "Time Tracking",
-          url: "/analytics/time",
-        },
-      ],
     },
     {
       title: "Team",
