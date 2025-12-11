@@ -14,21 +14,17 @@ datasource db {
 }
 
 // ==========================================
-// AUTHENTICATION (Better Auth Tables)
+// AUTHENTICATION (Supabase Auth - User managed in Supabase)
 // ==========================================
 
 model user {
-  id            String    @id
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        Int       @unique @default(autoincrement()) // Legacy/Sequential ID (e.g. 1, 2, 3)
   name          String
   email         String
-  emailVerified Boolean   @default(false)
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  // Better Auth relations
-  sessions      session[]
-  accounts      account[]
 
   // Application relations
   workspaceMemberships workspaceMember[]
@@ -42,60 +38,14 @@ model user {
   @@map("user")
 }
 
-model session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@index([userId])
-  @@map("session")
-}
-
-model account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("account")
-}
-
-model verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([identifier])
-  @@map("verification")
-}
+// ... (skipping unchanged parts)
 
 // ==========================================
 // WORKSPACE & TEAM MANAGEMENT
 // ==========================================
 
 model workspace {
-  id          String   @id @default(cuid())
+  id          Int      @id @default(autoincrement())
   name        String
   slug        String   @unique
   description String?
@@ -112,9 +62,9 @@ model workspace {
 }
 
 model workspaceMember {
-  id          String               @id @default(cuid())
-  workspaceId String
-  userId      String
+  id          Int                  @id @default(autoincrement())
+  workspaceId Int
+  userId      String               @db.Uuid
   role        WorkspaceMemberRole  @default(MEMBER)
   status      MemberStatus         @default(ACTIVE)
   joinedAt    DateTime             @default(now())
@@ -134,12 +84,12 @@ model workspaceMember {
 }
 
 model invitation {
-  id          String              @id @default(cuid())
-  workspaceId String
+  id          Int                 @id @default(autoincrement())
+  workspaceId Int
   email       String
   role        WorkspaceMemberRole @default(MEMBER)
   status      InvitationStatus    @default(PENDING)
-  invitedById String
+  invitedById String              @db.Uuid
   invitedAt   DateTime            @default(now())
   expiresAt   DateTime
   acceptedAt  DateTime?
@@ -158,13 +108,15 @@ model invitation {
   @@map("invitation")
 }
 
+// ...
+
 // ==========================================
 // PROJECTS
 // ==========================================
 
 model project {
-  id          String        @id @default(cuid())
-  workspaceId String
+  id          Int           @id @default(autoincrement())
+  workspaceId Int
   name        String
   description String?
   color       String        @default("#3b82f6")
@@ -185,9 +137,9 @@ model project {
 }
 
 model projectMember {
-  id                String            @id @default(cuid())
-  projectId         String
-  workspaceMemberId String
+  id                Int               @id @default(autoincrement())
+  projectId         Int
+  workspaceMemberId Int
   role              ProjectMemberRole @default(MEMBER)
   assignedAt        DateTime          @default(now())
   createdAt         DateTime          @default(now())
@@ -208,9 +160,9 @@ model projectMember {
 // ==========================================
 
 model task {
-  id          String       @id @default(cuid())
-  projectId   String
-  createdById String
+  id          Int          @id @default(autoincrement())
+  projectId   Int
+  createdById String       @db.Uuid
   title       String
   description String?      @db.Text
   status      TaskStatus   @default(TODO)
@@ -241,9 +193,9 @@ model task {
 }
 
 model taskAssignee {
-  id         String   @id @default(cuid())
-  taskId     String
-  userId     String
+  id         Int      @id @default(autoincrement())
+  taskId     Int
+  userId     String   @db.Uuid
   assignedAt DateTime @default(now())
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -258,14 +210,10 @@ model taskAssignee {
   @@map("task_assignee")
 }
 
-// ==========================================
-// COLLABORATION
-// ==========================================
-
 model comment {
-  id        String   @id @default(cuid())
-  taskId    String
-  userId    String
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  userId    String   @db.Uuid
   content   String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -281,8 +229,8 @@ model comment {
 }
 
 model attachment {
-  id        String   @id @default(cuid())
-  taskId    String
+  id        Int      @id @default(autoincrement())
+  taskId    Int
   fileName  String
   fileUrl   String
   fileSize  Int?
@@ -297,10 +245,12 @@ model attachment {
   @@map("attachment")
 }
 
+// ...
+
 model activityLog {
-  id          String         @id @default(cuid())
-  taskId      String?
-  userId      String
+  id          Int            @id @default(autoincrement())
+  taskId      Int?
+  userId      String         @db.Uuid
   action      ActivityAction
   entityType  String
   entityId    String
