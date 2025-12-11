@@ -22,18 +22,28 @@ import { Label } from "@/components/ui/label";
 import { Plus, Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export function InviteModal() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Member");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInvite = (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Inviting", email, "as", role);
-    toast.success(`Invitation sent to ${email}`);
-    setOpen(false);
-    setEmail("");
+    setIsSubmitting(true);
+
+    try {
+      console.log("Inviting", email, "as", role);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      toast.success(`Invitation sent to ${email}`);
+      setOpen(false);
+      setEmail("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -79,12 +89,18 @@ export function InviteModal() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">
-              <Mail className="mr-2 h-4 w-4" />
-              Send Invitation
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-4 w-4 mr-2" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Invitation
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { Plus } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskFilters } from "@/components/task-filters";
 import { PriorityBadge } from "@/components/ui/priority-badge";
@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Pencil, Trash2, CheckCircle2, Timer, Circle } from "lucide-react";
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/spinner";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -226,10 +228,6 @@ function DashboardContent() {
             Manage your tasks efficiently
           </p>
         </div>
-        <Button size="lg" className="rounded-xl px-6">
-          <Plus className="mr-2 h-5 w-5" />
-          New Task
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -368,8 +366,16 @@ function DashboardContent() {
           ))
         )}
         {Object.keys(groupedTasks).length === 0 && (
-          <div className="bg-card rounded-2xl border border-border p-8 text-center text-muted-foreground">
-            No tasks found matching your filters.
+          <div className="bg-card rounded-2xl border border-border p-12">
+            <Empty>
+              <EmptyMedia>
+                <Search className="h-12 w-12" />
+              </EmptyMedia>
+              <EmptyTitle>No tasks found</EmptyTitle>
+              <EmptyDescription>
+                Try adjusting your filters or create a new task to get started.
+              </EmptyDescription>
+            </Empty>
           </div>
         )}
       </div>
@@ -379,7 +385,11 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    }>
       <DashboardContent />
     </Suspense>
   );

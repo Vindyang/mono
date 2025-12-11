@@ -6,7 +6,8 @@ import { TeamMember } from "@/lib/types/team";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Mail, Search, Pencil } from "lucide-react";
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { MoreHorizontal, Mail, Search, Pencil, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -171,8 +172,18 @@ export function MemberList({ members, hideProjects = false }: MemberListProps) {
             </div>
             ))
         ) : (
-             <div className="p-8 text-center text-muted-foreground">
-                No members found.
+             <div className="p-12">
+                <Empty>
+                  <EmptyMedia>
+                    <Users className="h-12 w-12" />
+                  </EmptyMedia>
+                  <EmptyTitle>No members found</EmptyTitle>
+                  <EmptyDescription>
+                    {searchQuery || roleFilter !== "all"
+                      ? "Try adjusting your search or filters to find team members."
+                      : "Get started by inviting team members to collaborate."}
+                  </EmptyDescription>
+                </Empty>
             </div>
         )}
       </div>

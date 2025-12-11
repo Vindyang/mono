@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 
 interface NewProjectModalProps {
   children?: React.ReactNode;
@@ -24,13 +25,22 @@ export function NewProjectModal({ children }: NewProjectModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#3b82f6");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would call an API or Server Action
-    console.log("Creating project:", { name, description, color });
-    setOpen(false);
-    resetForm();
+    setIsSubmitting(true);
+
+    try {
+      // In a real app, this would call an API or Server Action
+      console.log("Creating project:", { name, description, color });
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setOpen(false);
+      resetForm();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -116,7 +126,16 @@ export function NewProjectModal({ children }: NewProjectModalProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Spinner className="h-4 w-4 mr-2" />
+                  Creating...
+                </>
+              ) : (
+                "Save changes"
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -5,6 +5,7 @@ import { X, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -376,21 +377,13 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
 
         <DialogFooter>
           <Button
-            type="button"
-            variant="outline"
-            onClick={() => onClose()}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
             type="submit"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+                <Spinner className="h-4 w-4 mr-2" />
                 {task ? "Updating..." : "Creating..."}
               </>
             ) : task ? (

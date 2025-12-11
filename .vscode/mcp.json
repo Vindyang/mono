@@ -1,13 +1,21 @@
 {
-	"servers": {
-		"my-mcp-server-96cb7730": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"shadcn@latest",
-				"mcp"
-			]
-		}
-	},
-	"inputs": []
+  "servers": {
+    "Shadcn": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "Better Auth": {
+      "url": "https://mcp.chonkie.ai/better-auth/better-auth-builder/mcp"
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=ncqucnaglulxmzrqmxze"
+    },
+    "Prisma-Remote": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.prisma.io/mcp"]
+    }
+  },
+  "inputs": []
 }

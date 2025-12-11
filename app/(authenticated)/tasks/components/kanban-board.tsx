@@ -25,6 +25,8 @@ import { Task } from "@/lib/types/task";
 import { SortableTaskCard } from "./sortable-task-card";
 import { TaskCard } from "./task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Empty, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { CheckCircle2, Circle, Timer } from "lucide-react";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -84,8 +86,15 @@ function KanbanColumn({
           <ScrollArea className="flex-1">
             <div className="space-y-2 pb-4 min-h-[100px]">
               {tasks.length === 0 ? (
-                <div className="text-center text-muted-foreground py-12">
-                  <p className="text-xs">No tasks</p>
+                <div className="py-8">
+                  <Empty>
+                    <EmptyMedia>
+                      {column.id === "todo" && <Circle className="h-10 w-10" />}
+                      {column.id === "in_progress" && <Timer className="h-10 w-10" />}
+                      {column.id === "done" && <CheckCircle2 className="h-10 w-10" />}
+                    </EmptyMedia>
+                    <EmptyTitle className="text-sm">No tasks</EmptyTitle>
+                  </Empty>
                 </div>
               ) : (
                 tasks.map((task) => (

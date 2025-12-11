@@ -13,6 +13,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
 import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
+import { Spinner } from "@/components/ui/spinner";
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
@@ -199,7 +200,11 @@ function TasksContent() {
 
 export default function TasksPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    }>
       <TasksContent />
     </Suspense>
   );
