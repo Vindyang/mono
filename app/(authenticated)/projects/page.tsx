@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Folder, MoreHorizontal, Pencil, Trash2, Calendar, Clock, ArrowRight } from "lucide-react";
+import { Plus, Folder, MoreHorizontal, Pencil, Trash2, Calendar, Clock, ArrowRight, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +31,13 @@ export default function ProjectsPage() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
@@ -47,8 +55,9 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => {
+      {projects.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => {
           // ... (existing mapped content)
           const progress = (project.completedTaskCount / project.taskCount) * 100;
           
@@ -132,9 +141,20 @@ export default function ProjectsPage() {
             </div>
           );
         })}
-
-
       </div>
+      ) : (
+        <div className="flex items-center justify-center min-h-[400px] bg-card rounded-2xl border border-border">
+          <Empty>
+            <EmptyMedia>
+              <FolderOpen className="h-12 w-12" />
+            </EmptyMedia>
+            <EmptyTitle>No projects yet</EmptyTitle>
+            <EmptyDescription>
+              Get started by creating your first project to organize your tasks.
+            </EmptyDescription>
+          </Empty>
+        </div>
+      )}
     </div>
   );
 }

@@ -63,6 +63,7 @@ async function main() {
       create: {
         name: data.name,
         email: data.email,
+        emailVerified: false,
         image: data.image,
       },
     });
@@ -438,4 +439,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

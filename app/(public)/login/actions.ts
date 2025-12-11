@@ -6,7 +6,7 @@ type ActionState = {
   success?: boolean;
 };
 
-export async function signup(
+export async function login(
   _prevState: ActionState | undefined,
   formData: FormData
 ): Promise<ActionState> {
@@ -43,7 +43,7 @@ export async function signup(
 
     return { success: true };
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("Login error:", error);
     return { error: "Something went wrong. Please try again." };
   }
 }

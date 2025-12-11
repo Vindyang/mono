@@ -5,6 +5,7 @@ import { CalendarView } from "./components/calendar-view";
 import { Task } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
 import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function CalendarPage() {
   // In a real app, this would be fetched from an API
@@ -98,7 +99,11 @@ export default function CalendarPage() {
   };
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
   return (

@@ -14,29 +14,8 @@ datasource db {
 }
 
 // ==========================================
-// AUTHENTICATION (Supabase Auth - User managed in Supabase)
+// AUTHENTICATION (Better-Auth)
 // ==========================================
-
-model user {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        Int       @unique @default(autoincrement()) // Legacy/Sequential ID (e.g. 1, 2, 3)
-  name          String
-  email         String
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Application relations
-  workspaceMemberships workspaceMember[]
-  createdTasks         task[]            @relation("TaskCreator")
-  assignedTasks        taskAssignee[]
-  comments             comment[]
-  activityLogs         activityLog[]
-  sentInvitations      invitation[]      @relation("InvitationSender")
-
-  @@unique([email])
-  @@map("user")
-}
 
 // ... (skipping unchanged parts)
 
@@ -62,18 +41,18 @@ model workspace {
 }
 
 model workspaceMember {
-  id          Int                  @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   workspaceId Int
-  userId      String               @db.Uuid
-  role        WorkspaceMemberRole  @default(MEMBER)
-  status      MemberStatus         @default(ACTIVE)
-  joinedAt    DateTime             @default(now())
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  userId      String              @db.Uuid
+  role        WorkspaceMemberRole @default(MEMBER)
+  status      MemberStatus        @default(ACTIVE)
+  joinedAt    DateTime            @default(now())
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
   // Relations
-  workspace          workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user               user              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace          workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user               user            @relation(fields: [userId], references: [id], onDelete: Cascade)
   projectAssignments projectMember[]
 
   @@unique([workspaceId, userId])
@@ -97,8 +76,8 @@ model invitation {
   updatedAt   DateTime            @updatedAt
 
   // Relations
-  workspace   workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  invitedBy   user                @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Cascade)
+  workspace workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy user      @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, email])
   @@index([workspaceId])
@@ -126,9 +105,9 @@ model project {
   updatedAt   DateTime      @updatedAt
 
   // Relations
-  workspace   workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  tasks       task[]
-  members     projectMember[]
+  workspace workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks     task[]
+  members   projectMember[]
 
   @@index([workspaceId])
   @@index([workspaceId, status])
@@ -160,18 +139,18 @@ model projectMember {
 // ==========================================
 
 model task {
-  id          Int          @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   projectId   Int
-  createdById String       @db.Uuid
+  createdById String        @db.Uuid
   title       String
-  description String?      @db.Text
-  status      TaskStatus   @default(TODO)
+  description String?       @db.Text
+  status      TaskStatus    @default(TODO)
   priority    TaskPriority?
   dueDate     DateTime?
   image       String?
-  position    Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  position    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   // Relations
   project     project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -201,8 +180,8 @@ model taskAssignee {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  task       task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user       user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
   @@index([taskId])
@@ -219,8 +198,8 @@ model comment {
   updatedAt DateTime @updatedAt
 
   // Relations
-  task      task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([userId])
@@ -239,7 +218,7 @@ model attachment {
   updatedAt DateTime @updatedAt
 
   // Relations
-  task      task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@map("attachment")
@@ -248,24 +227,101 @@ model attachment {
 // ...
 
 model activityLog {
-  id          Int            @id @default(autoincrement())
-  taskId      Int?
-  userId      String         @db.Uuid
-  action      ActivityAction
-  entityType  String
-  entityId    String
-  metadata    Json?
-  createdAt   DateTime       @default(now())
+  id         Int            @id @default(autoincrement())
+  taskId     Int?
+  userId     String         @db.Uuid
+  action     ActivityAction
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime       @default(now())
 
   // Relations
-  task        task?          @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user        user           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user user  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([userId])
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("activity_log")
+}
+
+// ==========================================
+// BETTER-AUTH TABLES
+// ==========================================
+
+model user {
+  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String
+  email                String
+  emailVerified        Boolean          @default(false)
+  image                String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  // Better-auth relations
+  sessions             session[]
+  accounts             account[]
+
+  // Application relations
+  workspaceMemberships workspaceMember[]
+  createdTasks         task[]            @relation("TaskCreator")
+  assignedTasks        taskAssignee[]
+  comments             comment[]
+  activityLogs         activityLog[]
+  sentInvitations      invitation[]      @relation("InvitationSender")
+
+  @@unique([email])
+  @@map("user")
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String   @db.Uuid
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String    @db.Uuid
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
 
 // ==========================================

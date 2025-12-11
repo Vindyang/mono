@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
 import { Task } from "@/lib/types/task";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Clock, Calendar, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Clock, Calendar, CheckCircle2, Circle, ClipboardList } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import Link from "next/link";
 import dayjs from "dayjs";
 import { Progress } from "@/components/ui/progress";
@@ -31,7 +33,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     notFound();
   }
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
 
   const progress = (project.completedTaskCount / project.taskCount) * 100;
 
@@ -149,8 +157,16 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                         </div>
                         ))
                     ) : (
-                        <div className="p-12 text-center text-muted-foreground">
-                            No tasks found for this project.
+                        <div className="p-12">
+                            <Empty>
+                                <EmptyMedia>
+                                    <ClipboardList className="h-12 w-12" />
+                                </EmptyMedia>
+                                <EmptyTitle>No tasks yet</EmptyTitle>
+                                <EmptyDescription>
+                                    Create tasks to track progress for this project.
+                                </EmptyDescription>
+                            </Empty>
                         </div>
                     )}
                 </div>

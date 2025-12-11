@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Spinner } from "@/components/ui/spinner";
 import { 
   Card, 
   CardContent, 
@@ -21,13 +22,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
+  const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const handleSaveWorkspace = async () => {
+    setIsSavingWorkspace(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsSavingWorkspace(false);
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsSavingProfile(false);
+  };
+
   if (!mounted) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
   return (
@@ -72,7 +93,16 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
               <CardFooter className="border-t px-6 py-4">
-                <Button>Save Changes</Button>
+                <Button onClick={handleSaveWorkspace} disabled={isSavingWorkspace}>
+                  {isSavingWorkspace ? (
+                    <>
+                      <Spinner className="h-4 w-4 mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               </CardFooter>
             </Card>
 
@@ -152,7 +182,16 @@ export default function SettingsPage() {
                       </div>
                   </CardContent>
                    <CardFooter className="border-t px-6 py-4">
-                      <Button>Save Profile</Button>
+                      <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+                        {isSavingProfile ? (
+                          <>
+                            <Spinner className="h-4 w-4 mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save Profile"
+                        )}
+                      </Button>
                   </CardFooter>
               </Card>
 
