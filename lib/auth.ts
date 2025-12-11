@@ -2,12 +2,21 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink } from "better-auth/plugins";
 import { prisma } from "@/lib/prisma";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  // Disable Better Auth's ID generation to let the database generate UUIDs
+  advanced: {
+    database: {
+      generateId: false,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -15,50 +24,26 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       disableSignUp: false, // Allow new users to sign up via magic link
-      sendMagicLink: async ({ email, token, url }) => {
-        // Use Supabase client API to send magic link (no service role key needed)
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-        if (!supabaseUrl || !anonKey) {
-          console.error("Missing Supabase configuration");
-          throw new Error("Email service not configured");
-        }
-
+      sendMagicLink: async ({ email, url }) => {
+        // Send magic link email using Resend
         try {
-          // Send the magic link using Supabase's signInWithOtp
-          // This uses the anon key and sends the email automatically
-          const response = await fetch(
-            `${supabaseUrl}/auth/v1/otp`,
-            {
-              method: "POST",
-              headers: {
-                apikey: anonKey,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                email: email,
-                create_user: true,
-                options: {
-                  email_redirect_to: url,
-                  data: {
-                    better_auth_token: token,
-                  },
-                },
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            const error = await response.json();
-            console.error("Error sending magic link via Supabase:", error);
-            throw new Error("Failed to send magic link");
-          }
+          await resend.emails.send({
+            from: "onboarding@resend.dev",
+            to: email,
+            subject: "Sign in to your account",
+            html: `
+              <h2>Sign in to your account</h2>
+              <p>Click the link below to sign in:</p>
+              <a href="${url}">Sign in</a>
+              <p>This link will expire in 5 minutes.</p>
+              <p>If you didn't request this email, you can safely ignore it.</p>
+            `,
+          });
 
           console.log(`Magic link sent successfully to ${email}`);
         } catch (error) {
-          console.error("Error in sendMagicLink:", error);
-          throw error;
+          console.error("Error sending magic link:", error);
+          throw new Error("Failed to send magic link");
         }
       },
     }),
@@ -67,9 +52,7 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
   },
-  trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  ],
+  trustedOrigins: [process.env.BETTER_AUTH_URL || "http://localhost:3000"],
   // User is automatically created by better-auth when they verify the magic link
-  // The user table will be populated with: id (UUID), email, name (from email), emailVerified, etc.
+  // The name field will be set to the username (part before @) via the after hook
 });

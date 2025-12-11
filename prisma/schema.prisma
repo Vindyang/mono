@@ -277,7 +277,7 @@ model user {
 }
 
 model session {
-  id        String   @id
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   expiresAt DateTime
   token     String
   createdAt DateTime @default(now())
@@ -293,7 +293,7 @@ model session {
 }
 
 model account {
-  id                    String    @id
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   accountId             String
   providerId            String
   userId                String    @db.Uuid
@@ -313,7 +313,7 @@ model account {
 }
 
 model verification {
-  id         String   @id
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   identifier String
   value      String
   expiresAt  DateTime
