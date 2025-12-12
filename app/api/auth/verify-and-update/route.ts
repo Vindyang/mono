@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { extractEmailFromVerification } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
@@ -17,22 +18,16 @@ export async function GET(request: NextRequest) {
   });
 
   if (verification) {
-    // Parse the email from the value field (it's stored as JSON)
-    try {
-      const parsed = JSON.parse(verification.value);
-      const email = parsed.email;
+    const email = extractEmailFromVerification(verification.value);
 
-      if (email) {
-        // Update lastLoginAt BEFORE calling verify, so it's ready when the session is created
-        await prisma.user.update({
-          where: { email },
-          data: { lastLoginAt: new Date() },
-        }).catch((error) => {
-          console.error("Failed to update lastLoginAt:", error);
-        });
-      }
-    } catch (error) {
-      console.error("Failed to parse verification value:", error);
+    if (email) {
+      // Update lastLoginAt BEFORE calling verify, so it's ready when the session is created
+      await prisma.user.update({
+        where: { email },
+        data: { lastLoginAt: new Date() },
+      }).catch((error) => {
+        console.error("Failed to update lastLoginAt:", error);
+      });
     }
   }
 

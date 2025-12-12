@@ -59,18 +59,15 @@ export async function login(
     }
 
     const data = await response.json();
-    console.log("Response from login-with-check:", data);
 
     // Check if the response includes an auto-login URL (for users who logged in recently)
     if (data.autoLoginUrl) {
-      console.log("Auto-login detected, returning autoLoginUrl:", data.autoLoginUrl);
       return {
         success: true,
         autoLoginUrl: data.autoLoginUrl
       };
     }
 
-    console.log("No auto-login, returning normal success");
     return {
       success: true
     };

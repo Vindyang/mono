@@ -58,11 +58,14 @@ export function LoginForm({
   }, [state?.success, state?.autoLoginUrl]);
 
   if (state?.success) {
-    // If auto-login, show loading state
+    // If auto-login, show spinner during redirect
     if (state.autoLoginUrl) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-          <Spinner className="h-8 w-8" />
+        <div className={cn("flex flex-col gap-6 text-center", className)} {...props}>
+          <div className="flex flex-col items-center gap-4">
+            <Spinner className="h-8 w-8" />
+            <p className="text-muted-foreground">Logging you in...</p>
+          </div>
         </div>
       );
     }
@@ -123,8 +126,11 @@ export function LoginForm({
           )}
           <Field>
             <Button type="submit" disabled={pending} className="relative">
-              {pending && <Spinner className="absolute left-4" />}
-              <span className={pending ? "opacity-50" : ""}>Login</span>
+              {pending ? (
+                <Spinner className="h-4 w-4" />
+              ) : (
+                "Login"
+              )}
             </Button>
           </Field>
           <FieldSeparator>Or</FieldSeparator>

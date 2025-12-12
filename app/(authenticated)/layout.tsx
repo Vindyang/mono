@@ -41,12 +41,13 @@ export default function AuthenticatedLayout({
     // If this is an auto-login, wait a bit longer before redirecting
     // to give the session time to be established
     if (isAutoLogin && !session && !isPending) {
-      // Wait 1 second before redirecting to give session time to load
+      // Wait 100ms before redirecting to give session time to load
+      // Reduced for minimal delay
       const timeout = setTimeout(() => {
         if (!session) {
           router.push("/login");
         }
-      }, 1000);
+      }, 100);
       return () => clearTimeout(timeout);
     }
 
@@ -56,32 +57,38 @@ export default function AuthenticatedLayout({
     }
   }, [mounted, isPending, session, router, isAutoLogin]);
 
-  // Show loading while checking auth or mounting
-  if (!mounted || isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
-  }
-
-  // Don't render content if not authenticated
-  if (!session) {
+  // Don't render anything during SSR hydration to prevent flash
+  if (!mounted) {
     return null;
   }
 
+  // Don't render content if not authenticated (redirect will happen via useEffect)
+  if (!session && !isPending && !(isAutoLogin && !session)) {
+    return null;
+  }
+
+  // Always render the desktop layout to prevent layout shift
+  // Only the content area changes between loading and loaded states
+  const isLoading = isPending || (isAutoLogin && !session);
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white px-4">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
           </div>
-          <UserMenu />
+          {!isLoading && <UserMenu />}
         </header>
         <div className="flex flex-1 flex-col gap-4 bg-gray-50 p-4">
-          {children}
+          {isLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Spinner className="h-8 w-8" />
+            </div>
+          ) : (
+            children
+          )}
         </div>
       </SidebarInset>
     </SidebarProvider>

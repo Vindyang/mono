@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink } from "better-auth/plugins";
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
+import { shouldAutoLogin } from "@/lib/auth-utils";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -34,8 +35,7 @@ export const auth = betterAuth({
           select: { lastLoginAt: true },
         });
 
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const shouldSkipEmail = user?.lastLoginAt && user.lastLoginAt > thirtyDaysAgo;
+        const shouldSkipEmail = shouldAutoLogin(user?.lastLoginAt ?? null);
 
         if (shouldSkipEmail) {
           // User logged in recently - don't send email, just log the URL for auto-login
