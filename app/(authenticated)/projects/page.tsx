@@ -19,19 +19,42 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
-import { INITIAL_PROJECTS } from "@/lib/data";
+import { toast } from "sonner";
+import { getProjectsData, ProjectWithStats } from "./componentsaction/actions";
+
 import { NewProjectModal } from "@/app/(authenticated)/projects/components/new-project-modal";
 
 export default function ProjectsPage() {
-  const [projects] = useState(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Prevent hydration error due to dayjs/radix IDs
   useEffect(() => {
     setMounted(true);
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { projects, error } = await getProjectsData();
+        
+        if (error) {
+           toast.error(error);
+           return;
+        }
+
+        if (projects) setProjects(projects);
+      } catch (error) {
+        console.error("Failed to fetch projects data", error);
+        toast.error("Failed to load projects");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner className="h-8 w-8" />
