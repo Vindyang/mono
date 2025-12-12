@@ -8,6 +8,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
+import { useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function AuthenticatedLayout({
   children,
@@ -15,18 +18,33 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const { data: session, isPending } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (mounted && !isPending && !session) {
+      router.push("/login");
+    }
+  }, [mounted, isPending, session, router]);
+
+  // Show loading while checking auth or mounting
+  if (!mounted || isPending) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">{children}</div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Spinner className="h-8 w-8" />
       </div>
     );
+  }
+
+  // Don't render content if not authenticated
+  if (!session) {
+    return null;
   }
 
   return (

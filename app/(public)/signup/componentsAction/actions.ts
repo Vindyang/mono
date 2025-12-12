@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 type ActionState = {
   error?: string;
   success?: boolean;
+  errorType?: "validation" | "system";
 };
 
 export async function signup(
@@ -38,12 +39,18 @@ export async function signup(
     const data = await response.json();
 
     if (!response.ok) {
-      return { error: data.message || "Failed to send magic link" };
+      return {
+        error: data.message || "Failed to send magic link",
+        errorType: "system"
+      };
     }
 
     return { success: true };
   } catch (error) {
     console.error("Signup error:", error);
-    return { error: "Something went wrong. Please try again." };
+    return {
+      error: "Something went wrong. Please try again.",
+      errorType: "system"
+    };
   }
 }

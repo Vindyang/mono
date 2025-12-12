@@ -1,40 +1,64 @@
-"use client"
+"use client";
 
-import { useActionState } from "react"
-import { GalleryVerticalEnd } from "lucide-react"
+import { useActionState, useEffect } from "react";
+import { GalleryVerticalEnd } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
   FieldDescription,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { signup } from "@/app/(public)/signup/actions"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { signup } from "@/app/(public)/signup/componentsAction/actions";
+import { useSession } from "@/lib/auth-client";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [state, action, pending] = useActionState(signup, undefined)
+  const [state, action, pending] = useActionState(signup, undefined);
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (session) {
+      router.push("/dashboard");
+    }
+  }, [session, router]);
+
+  // Show toast notifications for system errors
+  useEffect(() => {
+    if (state?.errorType === "system") {
+      toast.error(state.error || "Something went wrong. Please try again.");
+    }
+  }, [state?.errorType, state?.error]);
 
   if (state?.success) {
     return (
-      <div className={cn("flex flex-col gap-6 text-center", className)} {...props}>
+      <div
+        className={cn("flex flex-col gap-6 text-center", className)}
+        {...props}
+      >
         <div className="flex flex-col items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-md">
+          <div className="flex size-8 items-center justify-center rounded-md">
             <GalleryVerticalEnd className="size-6" />
-            </div>
-            <h1 className="text-xl font-bold">Check your email</h1>
-            <p className="text-muted-foreground">
-            We&apos;ve sent you a confirmation link. Please check your email to verify your account.
-            </p>
+          </div>
+          <h1 className="text-xl font-bold">Check your email</h1>
+          <p className="text-muted-foreground">
+            We&apos;ve sent you a confirmation link. Please check your email to
+            verify your account.
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -66,12 +90,15 @@ export function SignupForm({
               required
             />
           </Field>
-          {state?.error && (
-            <p className="text-destructive text-sm font-medium">{state.error}</p>
+          {state?.error && !state?.errorType && (
+            <p className="text-destructive text-sm font-medium">
+              {state.error}
+            </p>
           )}
           <Field>
-            <Button type="submit" disabled={pending}>
-                {pending ? "Creating account..." : "Create Account"}
+            <Button type="submit" disabled={pending} className="relative">
+              {pending && <Spinner className="absolute left-4" />}
+              <span className={pending ? "opacity-50" : ""}>Create Account</span>
             </Button>
           </Field>
           <FieldSeparator>Or</FieldSeparator>
@@ -102,5 +129,5 @@ export function SignupForm({
         and <a href="#">Privacy Policy</a>.
       </FieldDescription>
     </div>
-  )
+  );
 }
