@@ -6,7 +6,7 @@ import { Task } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { getCalendarData } from "./actions";
+import { getCalendarData } from "./componentsaction/actions";
 
 export default function CalendarPage() {
   const [tasks, setTasks] = useState<Task[]>([]);

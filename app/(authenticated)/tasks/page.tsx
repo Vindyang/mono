@@ -14,7 +14,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { getTasksData } from "./actions";
+import { getTasksData } from "./componentsaction/actions";
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);

@@ -29,7 +29,7 @@ dayjs.extend(isSameOrAfter);
 // Sample data removed
 // const INITIAL_PROJECTS: Project[] = [ ... ];
 
-import { getDashboardData } from "./actions";
+import { getDashboardData } from "./componentsaction/actions";
 import { toast } from "sonner"; // Assuming sonner is used for toasts based on package.json
 
 function DashboardContent() {

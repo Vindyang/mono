@@ -14,7 +14,7 @@ import {
   FieldDescription,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { signup } from "@/app/(public)/signup/componentsAction/actions";
+import { signup } from "@/app/(public)/signup/componentsaction/actions";
 import { useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
