@@ -35,7 +35,7 @@ export function NewProjectModal({ children }: NewProjectModalProps) {
       // In a real app, this would call an API or Server Action
       console.log("Creating project:", { name, description, color });
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setOpen(false);
       resetForm();
     } finally {
@@ -74,12 +74,16 @@ export function NewProjectModal({ children }: NewProjectModalProps) {
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
-            Add a new project to your workspace. Click save when you're done.
+            Add a new project to your workspace. Click save when you&apos;re
+            done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label
+              htmlFor="name"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
               Name
             </label>
             <Input
@@ -92,7 +96,10 @@ export function NewProjectModal({ children }: NewProjectModalProps) {
             />
           </div>
           <div className="grid gap-2">
-            <label htmlFor="description" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label
+              htmlFor="description"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
               Description
             </label>
             <Textarea

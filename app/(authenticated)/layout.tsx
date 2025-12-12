@@ -18,20 +18,43 @@ export default function AuthenticatedLayout({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [isAutoLogin, setIsAutoLogin] = useState(false);
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+
+    // Check if this is an auto-login redirect (from verify-and-update)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("autologin") === "true") {
+      setIsAutoLogin(true);
+      // Clean up the URL by removing the autologin parameter
+      params.delete("autologin");
+      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState({}, "", newUrl);
+    }
   }, []);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
-    if (mounted && !isPending && !session) {
+    // If this is an auto-login, wait a bit longer before redirecting
+    // to give the session time to be established
+    if (isAutoLogin && !session && !isPending) {
+      // Wait 1 second before redirecting to give session time to load
+      const timeout = setTimeout(() => {
+        if (!session) {
+          router.push("/login");
+        }
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+
+    // Normal redirect logic for non-auto-login cases
+    if (!isAutoLogin && mounted && !isPending && !session) {
       router.push("/login");
     }
-  }, [mounted, isPending, session, router]);
+  }, [mounted, isPending, session, router, isAutoLogin]);
 
   // Show loading while checking auth or mounting
   if (!mounted || isPending) {

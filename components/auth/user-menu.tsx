@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,16 +10,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function UserMenu() {
-  const [user] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-  });
+  const { data: session } = useSession();
+  const router = useRouter();
 
-  const handleSignOut = () => {
-    // Implement sign out logic here
-    console.log("Sign out clicked");
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("Failed to sign out. Please try again.");
+    }
   };
 
   return (
@@ -33,9 +39,11 @@ export function UserMenu() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">
+              {session?.user?.name || "User"}
+            </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {session?.user?.email || ""}
             </p>
           </div>
         </DropdownMenuLabel>

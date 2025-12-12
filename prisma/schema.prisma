@@ -259,6 +259,7 @@ model user {
   image                String?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
+  lastLoginAt          DateTime?
 
   // Better-auth relations
   sessions             session[]

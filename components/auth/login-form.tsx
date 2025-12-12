@@ -48,30 +48,43 @@ export function LoginForm({
     }
   }, [state?.errorType, state?.error, router]);
 
+  // Handle auto-login for users who logged in recently
+  useEffect(() => {
+    if (state?.success && state?.autoLoginUrl) {
+      toast.success("Welcome back! Logging you in...");
+      // Navigate to the auto-login URL which will verify and redirect to dashboard
+      window.location.href = state.autoLoginUrl;
+    }
+  }, [state?.success, state?.autoLoginUrl]);
+
   if (state?.success) {
-    // If verification is required, show magic link message
-    if (state.requiresVerification) {
+    // If auto-login, show loading state
+    if (state.autoLoginUrl) {
       return (
-        <div
-          className={cn("flex flex-col gap-6 text-center", className)}
-          {...props}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-md">
-              <GalleryVerticalEnd className="size-6" />
-            </div>
-            <h1 className="text-xl font-bold">Check your email</h1>
-            <p className="text-muted-foreground">
-              We&apos;ve sent you a magic link. Please check your email to sign in
-              to your account.
-            </p>
-          </div>
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <Spinner className="h-8 w-8" />
         </div>
       );
     }
 
-    // Otherwise, user is logged in - redirect to dashboard will happen automatically
-    return null;
+    // Otherwise show "check your email" message
+    return (
+      <div
+        className={cn("flex flex-col gap-6 text-center", className)}
+        {...props}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex size-8 items-center justify-center rounded-md">
+            <GalleryVerticalEnd className="size-6" />
+          </div>
+          <h1 className="text-xl font-bold">Check your email</h1>
+          <p className="text-muted-foreground">
+            We&apos;ve sent you a magic link. Please check your email to sign in
+            to your account.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

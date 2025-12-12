@@ -35,9 +35,9 @@ export function InviteModal() {
     setIsSubmitting(true);
 
     try {
-      console.log("Inviting", email, "as", role);
+      // console.log("Inviting", email, "as", role);
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       toast.success(`Invitation sent to ${email}`);
       setOpen(false);
       setEmail("");
@@ -59,7 +59,8 @@ export function InviteModal() {
           <DialogHeader>
             <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>
-              Send an invitation link to a new team member. They can join once they accept.
+              Send an invitation link to a new team member. They can join once
+              they accept.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
