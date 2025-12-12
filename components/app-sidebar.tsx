@@ -1,7 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  GalleryVerticalEnd,
   LayoutDashboard,
   CheckSquare,
   Settings,
@@ -17,6 +16,7 @@ import {
   Hash,
   type LucideIcon,
 } from "lucide-react";
+import { MonoLogoSimple } from "@/components/ui/mono-logo";
 
 import {
   Sidebar,
@@ -98,10 +98,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
+                  <MonoLogoSimple className="size-5" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Todo App</span>
+                  <span className="font-medium">Mono</span>
                   <span className="">v1.0.0</span>
                 </div>
               </Link>

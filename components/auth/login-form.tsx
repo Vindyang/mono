@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { GalleryVerticalEnd } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { MonoLogoSimple } from "@/components/ui/mono-logo";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -77,8 +77,8 @@ export function LoginForm({
         {...props}
       >
         <div className="flex flex-col items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-md">
-            <GalleryVerticalEnd className="size-6" />
+          <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
+            <MonoLogoSimple className="size-7" />
           </div>
           <h1 className="text-xl font-bold">Check your email</h1>
           <p className="text-muted-foreground">
@@ -99,12 +99,12 @@ export function LoginForm({
               href="#"
               className="flex flex-col items-center gap-2 font-medium"
             >
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <GalleryVerticalEnd className="size-6" />
+              <div className="flex size-10 items-center justify-center rounded-md bg-primary/10">
+                <MonoLogoSimple className="size-7" />
               </div>
-              <span className="sr-only">Acme Inc.</span>
+              <span className="sr-only">Mono</span>
             </a>
-            <h1 className="text-xl font-bold">Welcome to Acme Inc.</h1>
+            <h1 className="text-xl font-bold">Welcome to Mono</h1>
             <FieldDescription>
               Don&apos;t have an account? <a href="/signup">Sign up</a>
             </FieldDescription>
