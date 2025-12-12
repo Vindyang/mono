@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { INITIAL_PROJECTS } from "@/lib/data";
 
 interface MemberListProps {
   members: TeamMember[];
@@ -115,14 +114,11 @@ export function MemberList({ members, hideProjects = false }: MemberListProps) {
                 <div className="col-span-3 hidden md:block">
                     <div className="flex flex-wrap gap-1">
                         {member.projects && member.projects.length > 0 ? (
-                            member.projects.map(projectId => {
-                                const project = INITIAL_PROJECTS.find(p => p.id === projectId);
-                                return project ? (
-                                    <Badge key={projectId} variant="secondary" className="text-[10px] px-1.5 h-5 bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400">
-                                        {project.name}
-                                    </Badge>
-                                ) : null;
-                            })
+                            member.projects.map(project => (
+                                <Badge key={project.id} variant="secondary" className="text-[10px] px-1.5 h-5 bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400">
+                                    {project.name}
+                                </Badge>
+                            ))
                         ) : (
                             <span className="text-xs text-muted-foreground italic">No projects</span>
                         )}

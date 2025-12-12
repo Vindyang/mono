@@ -6,7 +6,7 @@ export interface TeamMember {
   avatarUrl: string;
   status: "active" | "offline" | "busy";
   joinedAt: string;
-  projects?: string[]; // Array of Project IDs
+  projects?: { id: string, name: string }[]; // Array of Project details
 }
 
 export interface Invitation {

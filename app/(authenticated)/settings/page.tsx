@@ -15,18 +15,51 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Github, Slack, Figma } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getSettingsData, updateProfile, SettingsData } from "./componentsaction/actions"; // Import action
+import { toast } from "sonner"; // Import toast
 
 export default function SettingsPage() {
+  const [data, setData] = useState<SettingsData | null>(null); // State for data
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+  
+  // Form States
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+
   const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Fetch data on mount
+    const fetchData = async () => {
+        try {
+            setIsLoading(true);
+            const { data, error } = await getSettingsData();
+            if (error) {
+                toast.error(error);
+                return;
+            }
+            if (data) {
+                setData(data);
+                // Initialize form state
+                const names = data.user.name.split(' ');
+                setFirstName(names[0] || "");
+                setLastName(names.slice(1).join(' ') || "");
+            }
+        } catch (error) {
+            console.error("Failed to fetch settings", error);
+            toast.error("Failed to load settings");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchData();
   }, []);
 
   const handleSaveWorkspace = async () => {
@@ -34,16 +67,26 @@ export default function SettingsPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
     setIsSavingWorkspace(false);
+    toast.success("Workspace saved (simulated)");
   };
 
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const { success, error } = await updateProfile(firstName, lastName);
+
     setIsSavingProfile(false);
+
+    if (success) {
+        toast.success("Profile updated successfully");
+        // Optionally re-fetch or just update local state if we had a full user object
+        // For now, local state (inputs) is already updated.
+    } else {
+        toast.error(error || "Failed to update profile");
+    }
   };
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner className="h-8 w-8" />
@@ -80,7 +123,11 @@ export default function SettingsPage() {
               <CardContent className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="workspace-name">Workspace Name</Label>
-                  <Input id="workspace-name" defaultValue="My Awesome Project" />
+                  <Input 
+                    id="workspace-name" 
+                    defaultValue={data?.workspace?.name || ""} 
+                    placeholder={!data?.workspace ? "No workspace found" : ""}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="workspace-id">Workspace URL</Label>
@@ -88,12 +135,17 @@ export default function SettingsPage() {
                      <span className="inline-flex items-center rounded-l-md border border-r-0 border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
                         app.todo.com/
                      </span>
-                     <Input id="workspace-id" defaultValue="awesome-project" className="rounded-l-none" />
+                     <Input 
+                        id="workspace-id" 
+                        defaultValue={data?.workspace?.slug || ""} 
+                        placeholder={!data?.workspace ? "create-one" : ""}
+                        className="rounded-l-none" 
+                     />
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t px-6 py-4">
-                <Button onClick={handleSaveWorkspace} disabled={isSavingWorkspace}>
+                <Button onClick={handleSaveWorkspace} disabled={isSavingWorkspace || !data?.workspace}>
                   {isSavingWorkspace ? (
                     <>
                       <Spinner className="h-4 w-4 mr-2" />
@@ -152,8 +204,8 @@ export default function SettingsPage() {
                           <Label>Profile Picture</Label>
                           <div className="flex items-center gap-4">
                               <Avatar className="h-16 w-16">
-                                  <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                                  <AvatarFallback>CN</AvatarFallback>
+                                  <AvatarImage src={data?.user.image} alt={data?.user.name} />
+                                  <AvatarFallback>{data?.user.name.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <div className="flex gap-2">
                                   <Button variant="outline" size="sm">Change</Button>
@@ -165,17 +217,25 @@ export default function SettingsPage() {
                       <div className="grid gap-4 md:grid-cols-2">
                           <div className="grid gap-2">
                               <Label htmlFor="first-name">First name</Label>
-                              <Input id="first-name" defaultValue="Vindy" />
+                              <Input 
+                                id="first-name" 
+                                value={firstName} 
+                                onChange={(e) => setFirstName(e.target.value)}
+                              />
                           </div>
                           <div className="grid gap-2">
                               <Label htmlFor="last-name">Last name</Label>
-                              <Input id="last-name" defaultValue="Anggiono" />
+                              <Input 
+                                id="last-name" 
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                              />
                           </div>
                       </div>
 
                       <div className="grid gap-2">
                           <Label htmlFor="email">Email</Label>
-                          <Input id="email" defaultValue="vindy@example.com" disabled />
+                          <Input id="email" defaultValue={data?.user.email} disabled />
                           <p className="text-[0.8rem] text-muted-foreground">
                               Your email address is managed by your organization.
                           </p>

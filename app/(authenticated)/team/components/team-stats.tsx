@@ -7,9 +7,10 @@ interface TeamStatsProps {
   totalMembers: number;
   activeMembers: number;
   pendingInvites: number;
+  newMembersLastMonth: number;
 }
 
-export function TeamStats({ totalMembers, activeMembers, pendingInvites }: TeamStatsProps) {
+export function TeamStats({ totalMembers, activeMembers, pendingInvites, newMembersLastMonth }: TeamStatsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
       <Card>
@@ -20,7 +21,7 @@ export function TeamStats({ totalMembers, activeMembers, pendingInvites }: TeamS
         <CardContent>
           <div className="text-2xl font-bold">{totalMembers}</div>
           <p className="text-xs text-muted-foreground">
-            +2 from last month
+            +{newMembersLastMonth} from last month
           </p>
         </CardContent>
       </Card>

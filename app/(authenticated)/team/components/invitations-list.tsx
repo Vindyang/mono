@@ -3,23 +3,16 @@
 import { Invitation } from "@/lib/types/team";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Check } from "lucide-react";
+import { X, Check, Mail } from "lucide-react";
+import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 
 interface InvitationsListProps {
   invitations: Invitation[];
 }
 
 export function InvitationsList({ invitations }: InvitationsListProps) {
-  if (invitations.length === 0) {
-    return (
-        <div className="flex h-[200px] w-full flex-col items-center justify-center rounded-md border border-dashed border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-            <p className="text-sm text-zinc-500 md:text-base">No pending invitations</p>
-        </div>
-    )
-  }
-
   return (
-    <div className="rounded-md border border-zinc-200 dark:border-zinc-800">
+    <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black overflow-hidden">
       <div className="grid grid-cols-12 gap-4 border-b border-zinc-200 bg-zinc-50/50 p-4 text-xs font-medium text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
         <div className="col-span-5 md:col-span-5">Email</div>
         <div className="col-span-3 hidden md:block">Role</div>
@@ -27,7 +20,8 @@ export function InvitationsList({ invitations }: InvitationsListProps) {
         <div className="col-span-7 md:col-span-1 text-right">Actions</div>
       </div>
       <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-        {invitations.map((invitation) => (
+        {invitations.length > 0 ? (
+          invitations.map((invitation) => (
           <div
             key={invitation.id}
             className="grid grid-cols-12 items-center gap-4 p-4 text-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
@@ -63,7 +57,20 @@ export function InvitationsList({ invitations }: InvitationsListProps) {
                 </Button>
             </div>
           </div>
-        ))}
+        ))
+        ) : (
+            <div className="p-12">
+                <Empty>
+                    <EmptyMedia>
+                        <Mail className="h-12 w-12" />
+                    </EmptyMedia>
+                    <EmptyTitle>No pending invitations</EmptyTitle>
+                    <EmptyDescription>
+                        Invite team members to collaborate on your projects.
+                    </EmptyDescription>
+                </Empty>
+            </div>
+        )}
       </div>
     </div>
   );
