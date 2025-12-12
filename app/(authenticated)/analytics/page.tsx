@@ -2,7 +2,7 @@
 "use client";
 
 import { useTasksStatistics } from "@/hooks/use-tasks-statistics";
-import { INITIAL_TASKS } from "@/lib/data";
+
 import { KPICard } from "@/components/analytics/kpi-card";
 import { BurndownChart } from "@/components/analytics/charts/burndown-chart";
 import { CheckCircle2, Clock, AlertCircle, Calendar, BarChart3 } from "lucide-react";
@@ -11,19 +11,42 @@ import { Task } from "@/lib/types/task";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 
+import { toast } from "sonner";
+import { getAnalyticsData } from "./componentsaction/actions";
+
 export default function AnalyticsPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    // In a real app this would be a fetch call or context subscription
-    setTasks(INITIAL_TASKS);
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { tasks, error } = await getAnalyticsData();
+        
+        if (error) {
+           toast.error(error);
+           return;
+        }
+
+        if (tasks) setTasks(tasks);
+      } catch (error) {
+        console.error("Failed to fetch analytics data", error);
+        toast.error("Failed to load analytics");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const stats = useTasksStatistics(tasks);
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner className="h-8 w-8" />
