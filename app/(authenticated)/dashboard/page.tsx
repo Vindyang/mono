@@ -26,107 +26,44 @@ dayjs.extend(calendar);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
-// Sample data
-const INITIAL_PROJECTS: Project[] = [
-  { id: "proj_web", name: "Website Redesign", color: "#3b82f6" },
-  { id: "proj_app", name: "Mobile App Launch", color: "#8b5cf6" },
-  { id: "proj_mkt", name: "Q4 Marketing Campaign", color: "#10b981" },
-];
+// Sample data removed
+// const INITIAL_PROJECTS: Project[] = [ ... ];
+
+import { getDashboardData } from "./actions";
+import { toast } from "sonner"; // Assuming sonner is used for toasts based on package.json
 
 function DashboardContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    // Simulate fetching tasks
-    setTasks([
-      // Website Redesign Tasks
-      {
-        id: "1",
-        title: "Design System Audit",
-        description: "Review current components and identify inconsistencies",
-        status: "done",
-        priority: "high",
-        due_date: dayjs().format("YYYY-MM-DD"), // Today
-        projectId: "proj_web",
-        created_at: "2023-11-20",
-        updated_at: "2023-11-25",
-      },
-      {
-        id: "1b",
-        title: "Update Color Palette",
-        description: "Refine primary and secondary colors for better contrast",
-        status: "todo",
-        priority: "medium",
-        due_date: dayjs().format("YYYY-MM-DD"), // Today
-        projectId: "proj_web",
-        created_at: "2023-11-21",
-        updated_at: "2023-11-25",
-      },
-      {
-        id: "1c",
-        title: "Fix Navigation Bug",
-        description: "Menu doesn't close on mobile click",
-        status: "in_progress",
-        priority: "high",
-        due_date: dayjs().format("YYYY-MM-DD"), // Today
-        projectId: "proj_web",
-        created_at: "2023-11-22",
-        updated_at: "2023-11-25",
-      },
-      {
-        id: "1d",
-        title: "Optimize Images",
-        description: "Compress hero images for faster load time",
-        status: "todo",
-        priority: "low",
-        due_date: dayjs().format("YYYY-MM-DD"), // Today
-        projectId: "proj_web",
-        created_at: "2023-11-23",
-        updated_at: "2023-11-25",
-      },
-      {
-        id: "2",
-        title: "Homepage Hero Section",
-        description: "Design and implement the new hero section with 3D elements",
-        status: "in_progress",
-        priority: "high",
-        due_date: dayjs().add(1, 'day').format("YYYY-MM-DD"), // Tomorrow
-        projectId: "proj_web",
-        created_at: "2023-11-28",
-        updated_at: "2023-11-29",
-      },
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { tasks, projects, error } = await getDashboardData();
+        
+        if (error) {
+          toast.error(error);
+          return;
+        }
 
-      // Mobile App Launch Tasks
-      {
-        id: "4",
-        title: "Push Notification Setup",
-        description: "Configure Firebase Cloud Messaging for iOS and Android",
-        status: "in_progress",
-        priority: "high",
-        due_date: dayjs().format("YYYY-MM-DD"), // Today (2nd task for today)
-        projectId: "proj_app",
-        created_at: "2023-11-25",
-        updated_at: "2023-11-27",
-      },
+        if (tasks) setTasks(tasks);
+        if (projects) setProjects(projects);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      // Q4 Marketing Campaign Tasks
-      {
-        id: "7",
-        title: "Social Media Calendar",
-        description: "Plan posts for Instagram, LinkedIn, and Twitter",
-        status: "todo",
-        priority: "medium",
-        due_date: dayjs().add(3, 'day').format("YYYY-MM-DD"), // Next Week (approx)
-        projectId: "proj_mkt",
-        created_at: "2023-11-15",
-        updated_at: "2023-11-29",
-      },
-    ]);
+    fetchData();
   }, []);
 
   const filteredTasks = useMemo(() => {
@@ -189,7 +126,7 @@ function DashboardContent() {
     }
 
     // Find project name from ID
-    const project = INITIAL_PROJECTS.find(p => p.id === task.projectId);
+    const project = projects.find(p => p.id === task.projectId);
     const projectName = project ? project.name : "No Project";
 
     if (!acc[dateKey][projectName]) {
@@ -212,8 +149,12 @@ function DashboardContent() {
     }
   };
 
-  if (!mounted) {
-    return null;
+  if (!mounted || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
   return (

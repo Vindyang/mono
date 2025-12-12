@@ -12,27 +12,47 @@ import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
-import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
+import { getTasksData } from "./actions";
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
-// Sample data replaced by imports
-
 function TasksContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects] = useState<Project[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    setTasks(INITIAL_TASKS);
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { tasks, projects, error } = await getTasksData();
+        
+        if (error) {
+           toast.error(error);
+           return;
+        }
+
+        if (tasks) setTasks(tasks);
+        if (projects) setProjects(projects);
+      } catch (error) {
+        console.error("Failed to fetch tasks data", error);
+        toast.error("Failed to load tasks");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Filter tasks based on search and filters using useMemo
@@ -155,8 +175,12 @@ function TasksContent() {
     setIsModalOpen(true);
   };
 
-  if (!mounted) {
-    return null;
+  if (!mounted || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
   return (

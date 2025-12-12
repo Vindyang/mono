@@ -4,19 +4,40 @@ import { useState, useEffect } from "react";
 import { CalendarView } from "./components/calendar-view";
 import { Task } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
-import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
+import { getCalendarData } from "./actions";
 
 export default function CalendarPage() {
-  // In a real app, this would be fetched from an API
-  // Using local state to mimic the behavior of the Tasks page for consistency
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [projects] = useState<Project[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
-    setTasks(INITIAL_TASKS);
+    
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { tasks, projects, error } = await getCalendarData();
+        
+        if (error) {
+           toast.error(error);
+           return;
+        }
+
+        if (tasks) setTasks(tasks);
+        if (projects) setProjects(projects);
+      } catch (error) {
+        console.error("Failed to fetch calendar data", error);
+        toast.error("Failed to load calendar data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleCreateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
@@ -98,7 +119,7 @@ export default function CalendarPage() {
     setTasks(updatedTasks);
   };
 
-  if (!mounted) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner className="h-8 w-8" />
