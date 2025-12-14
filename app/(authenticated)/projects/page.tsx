@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Folder, MoreHorizontal, Pencil, Trash2, Calendar, Clock, ArrowRight, FolderOpen } from "lucide-react";
+import { Folder, MoreHorizontal, Pencil, Trash2, ArrowRight, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
@@ -13,44 +13,41 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { Project } from "@/lib/types/project";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-
-dayjs.extend(relativeTime);
 
 import { toast } from "sonner";
 import { getProjectsData, ProjectWithStats } from "./componentsaction/actions";
 
 import { NewProjectModal } from "@/app/(authenticated)/projects/components/new-project-modal";
+import { EditProjectModal } from "@/app/(authenticated)/projects/components/edit-project-modal";
+import { DeleteProjectDialog } from "@/app/(authenticated)/projects/components/delete-project-dialog";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const { projects, error } = await getProjectsData();
+
+      if (error) {
+         toast.error(error);
+         return;
+      }
+
+      if (projects) setProjects(projects);
+    } catch (error) {
+      console.error("Failed to fetch projects data", error);
+      toast.error("Failed to load projects");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
-    
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const { projects, error } = await getProjectsData();
-        
-        if (error) {
-           toast.error(error);
-           return;
-        }
-
-        if (projects) setProjects(projects);
-      } catch (error) {
-        console.error("Failed to fetch projects data", error);
-        toast.error("Failed to load projects");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -74,7 +71,7 @@ export default function ProjectsPage() {
             Manage and track your ongoing projects
           </p>
         </div>
-        <NewProjectModal />
+        <NewProjectModal onSuccess={fetchData} />
       </div>
 
       {/* Projects Grid */}
@@ -82,7 +79,9 @@ export default function ProjectsPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => {
           // ... (existing mapped content)
-          const progress = (project.completedTaskCount / project.taskCount) * 100;
+          const progress = project.taskCount > 0
+            ? (project.completedTaskCount / project.taskCount) * 100
+            : 0;
           
           return (
             <div 
@@ -103,7 +102,7 @@ export default function ProjectsPage() {
                         {project.name}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Due {dayjs(project.dueDate).fromNow()}
+                        Due {dayjs(project.dueDate).format("DD/MM/YYYY")}
                       </p>
                     </div>
                   </div>
@@ -114,12 +113,19 @@ export default function ProjectsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Pencil className="mr-2 h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive focus:text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
+                      <EditProjectModal project={project} onSuccess={fetchData}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <Pencil className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                      </EditProjectModal>
+                      <DeleteProjectDialog projectId={project.id} projectName={project.name} onSuccess={fetchData}>
+                        <DropdownMenuItem
+                          onSelect={(e) => e.preventDefault()}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DeleteProjectDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -131,7 +137,9 @@ export default function ProjectsPage() {
                 <div className="mt-auto space-y-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground font-medium">Progress</span>
-                    <span className="text-foreground font-bold">{Math.round(progress)}%</span>
+                    <span className="text-foreground font-bold">
+                      {project.taskCount > 0 ? `${Math.round(progress)}%` : "-"}
+                    </span>
                   </div>
                   <Progress value={progress} className="h-2" />
                   

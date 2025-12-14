@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,57 +15,72 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
-
-import { createProject } from "../componentsaction/actions"; // Import action
-import { toast } from "sonner"; // Import toast
+import { updateProject } from "../componentsaction/actions";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
 
-interface NewProjectModalProps {
+interface EditProjectModalProps {
+  project: {
+    id: string;
+    name: string;
+    description?: string;
+    color: string;
+    dueDate?: string;
+  };
   children?: React.ReactNode;
   onSuccess?: () => void;
 }
 
-export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
+export function EditProjectModal({ project, children, onSuccess }: EditProjectModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [color, setColor] = useState("#3b82f6");
-  const [dueDate, setDueDate] = useState("");
+  const [name, setName] = useState(project.name);
+  const [description, setDescription] = useState(project.description || "");
+  const [color, setColor] = useState(project.color);
+  const [dueDate, setDueDate] = useState(
+    project.dueDate ? dayjs(project.dueDate).format("YYYY-MM-DD") : ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form when project prop changes
+  useEffect(() => {
+    setName(project.name);
+    setDescription(project.description || "");
+    setColor(project.color);
+    setDueDate(project.dueDate ? dayjs(project.dueDate).format("YYYY-MM-DD") : "");
+  }, [project]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { success, error } = await createProject(name, description, color, dueDate);
+      const { success, error } = await updateProject(
+        project.id,
+        name,
+        description,
+        color,
+        dueDate
+      );
 
       if (success) {
-        toast.success("Project created successfully");
+        toast.success("Project updated successfully");
         setOpen(false);
-        resetForm();
         if (onSuccess) {
           onSuccess(); // Call the callback to refresh data
         } else {
           router.refresh(); // Fallback to router refresh
         }
       } else {
-        toast.error(error || "Failed to create project");
+        toast.error(error || "Failed to update project");
       }
     } catch (err) {
-        console.error(err);
-        toast.error("Something went wrong");
+      console.error(err);
+      toast.error("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setColor("#3b82f6");
-    setDueDate("");
   };
 
   const colors = [
@@ -83,18 +98,17 @@ export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button size="lg" className="rounded-xl px-6">
-            <Plus className="mr-2 h-5 w-5" />
-            New Project
+          <Button variant="ghost" size="sm">
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>Edit Project</DialogTitle>
           <DialogDescription>
-            Add a new project to your workspace. Click save when you&apos;re
-            done.
+            Make changes to your project. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
@@ -171,7 +185,7 @@ export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
               {isSubmitting ? (
                 <>
                   <Spinner className="h-4 w-4 mr-2" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
                 "Save changes"

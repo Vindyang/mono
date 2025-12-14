@@ -140,7 +140,10 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
     avatarUrl: "https://i.pravatar.cc/150?u=1",
     status: "active",
     joinedAt: "2023-01-15",
-    projects: ["proj_web", "proj_app"],
+    projects: [
+      { id: "proj_web", name: "Website Redesign" },
+      { id: "proj_app", name: "Mobile App Launch" }
+    ],
   },
   {
     id: "user_2",
@@ -150,7 +153,11 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
     avatarUrl: "https://i.pravatar.cc/150?u=2",
     status: "active",
     joinedAt: "2023-02-10",
-    projects: ["proj_web", "proj_app", "proj_mkt"],
+    projects: [
+      { id: "proj_web", name: "Website Redesign" },
+      { id: "proj_app", name: "Mobile App Launch" },
+      { id: "proj_mkt", name: "Q4 Marketing Campaign" }
+    ],
   },
   {
     id: "user_3",
@@ -160,7 +167,9 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
     avatarUrl: "https://i.pravatar.cc/150?u=3",
     status: "offline",
     joinedAt: "2023-03-22",
-    projects: ["proj_web"],
+    projects: [
+      { id: "proj_web", name: "Website Redesign" }
+    ],
   },
   {
     id: "user_4",
@@ -170,7 +179,9 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
     avatarUrl: "https://i.pravatar.cc/150?u=4",
     status: "busy",
     joinedAt: "2023-04-05",
-    projects: ["proj_app"],
+    projects: [
+      { id: "proj_app", name: "Mobile App Launch" }
+    ],
   },
   {
     id: "user_5",
@@ -180,7 +191,9 @@ export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
     avatarUrl: "https://i.pravatar.cc/150?u=5",
     status: "active",
     joinedAt: "2023-05-18",
-    projects: ["proj_mkt"],
+    projects: [
+      { id: "proj_mkt", name: "Q4 Marketing Campaign" }
+    ],
   },
 ];
 
