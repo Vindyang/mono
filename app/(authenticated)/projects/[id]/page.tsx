@@ -18,6 +18,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<ProjectDetailWithTasks | null>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -62,7 +63,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     : 0;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
+    <div className="flex flex-col min-h-[calc(100vh-6rem)] gap-4 md:gap-6 p-4 md:p-6">
       {/* Back Button */}
       <div>
         <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-foreground text-muted-foreground group">
@@ -74,13 +75,23 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Project Header */}
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{project.name}</h1>
           {project.description && (
-            <p className="text-lg text-muted-foreground mt-1 w-full">
-              {project.description}
-            </p>
+            <div className="mt-1 w-full">
+              <p className={`text-lg text-muted-foreground ${!isDescriptionExpanded ? 'line-clamp-2 mb-1' : ''}`}>
+                {project.description}
+              </p>
+              {project.description.length > 150 && (
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="text-sm text-primary hover:underline mt-1 font-medium inline-block"
+                >
+                  {isDescriptionExpanded ? 'See less' : 'See more'}
+                </button>
+              )}
+            </div>
           )}
         </div>
 
