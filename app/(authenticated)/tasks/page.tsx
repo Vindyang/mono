@@ -14,7 +14,17 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { getTasksData } from "./componentsaction/actions";
+import { getTasksData, createTask, updateTask, deleteTask } from "./componentsaction/actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
@@ -26,7 +36,10 @@ function TasksContent() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -108,28 +121,50 @@ function TasksContent() {
     });
   }, [tasks, searchParams]);
 
-  const handleCreateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
-    const newTask: Task = {
-      ...data,
-      id: Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setTasks([newTask, ...tasks]);
-    setIsModalOpen(false);
+  const handleCreateTask = async (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+    const result = await createTask({
+      title: data.title,
+      description: data.description ?? null,
+      status: data.status,
+      priority: data.priority,
+      due_date: data.due_date ?? null,
+      image: data.image ?? null,
+      projectId: data.projectId,
+    });
+
+    if (result.success && result.task) {
+      setTasks([result.task, ...tasks]);
+      setIsModalOpen(false);
+      toast.success("Task created successfully");
+    } else {
+      toast.error(result.error || "Failed to create task");
+    }
   };
 
-  const handleUpdateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleUpdateTask = async (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
     if (!editingTask) return;
 
-    const updatedTasks = tasks.map((t) =>
-      t.id === editingTask.id
-        ? { ...t, ...data, updated_at: new Date().toISOString() }
-        : t
-    );
-    setTasks(updatedTasks);
-    setEditingTask(null);
-    setIsModalOpen(false);
+    const result = await updateTask(editingTask.id, {
+      title: data.title,
+      description: data.description ?? null,
+      status: data.status,
+      priority: data.priority,
+      due_date: data.due_date ?? null,
+      image: data.image ?? null,
+      projectId: data.projectId,
+    });
+
+    if (result.success && result.task) {
+      const updatedTasks = tasks.map((t) =>
+        t.id === editingTask.id ? result.task! : t
+      );
+      setTasks(updatedTasks);
+      setEditingTask(null);
+      setIsModalOpen(false);
+      toast.success("Task updated successfully");
+    } else {
+      toast.error(result.error || "Failed to update task");
+    }
   };
 
 
@@ -161,8 +196,29 @@ function TasksContent() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    const updatedTasks = tasks.filter((t) => t.id !== taskId);
-    setTasks(updatedTasks);
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      setTaskToDelete(task);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    setIsDeleting(true);
+    const result = await deleteTask(taskToDelete.id);
+
+    if (result.success) {
+      const updatedTasks = tasks.filter((t) => t.id !== taskToDelete.id);
+      setTasks(updatedTasks);
+      toast.success("Task deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setTaskToDelete(null);
+    } else {
+      toast.error(result.error || "Failed to delete task");
+    }
+    setIsDeleting(false);
   };
 
   const openCreateModal = () => {
@@ -218,6 +274,28 @@ function TasksContent() {
         projects={projects}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the task "{taskToDelete?.title}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTask}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

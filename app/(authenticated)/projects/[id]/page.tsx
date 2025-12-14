@@ -1,9 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CheckCircle2, Circle, ClipboardList, Plus } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle2, Circle, ClipboardList, Plus, Eye, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import Link from "next/link";
@@ -13,17 +13,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProjectDetails, ProjectDetailWithTasks } from "./componentsaction/actions";
 import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
-import { createTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
+import { createTask, updateTask, deleteTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
 import { Task } from "@/lib/types/task";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<ProjectDetailWithTasks | null>(null);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -55,6 +76,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     fetchProjectData();
   }, [resolvedParams.id]);
 
+  const refreshProjectData = async () => {
+    const { project: updatedProject, error: fetchError } = await getProjectDetails(resolvedParams.id);
+    if (updatedProject && !fetchError) {
+      setProject(updatedProject);
+    }
+  };
+
   const handleCreateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at">) => {
     try {
       const { success, task, error } = await createTask({
@@ -70,17 +98,92 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       if (success && task) {
         toast.success("Task created successfully");
         setIsTaskModalOpen(false);
-
-        // Refresh project data to show the new task
-        const { project: updatedProject, error: fetchError } = await getProjectDetails(resolvedParams.id);
-        if (updatedProject && !fetchError) {
-          setProject(updatedProject);
-        }
+        await refreshProjectData();
       }
     } catch (error) {
       console.error("Failed to create task:", error);
       toast.error("Failed to create task");
     }
+  };
+
+  const handleUpdateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at">) => {
+    if (!editingTask) return;
+
+    try {
+      const { success, error } = await updateTask(editingTask.id, {
+        title: taskData.title,
+        description: taskData.description ?? null,
+        status: taskData.status,
+        priority: taskData.priority,
+        due_date: taskData.due_date ?? null,
+        image: taskData.image ?? null,
+        projectId: taskData.projectId,
+      });
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      if (success) {
+        toast.success("Task updated successfully");
+        setIsTaskModalOpen(false);
+        setEditingTask(null);
+        await refreshProjectData();
+      }
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      toast.error("Failed to update task");
+    }
+  };
+
+  const handleDeleteTask = (task: any) => {
+    setTaskToDelete(task);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { success, error } = await deleteTask(taskToDelete.id);
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      if (success) {
+        toast.success("Task deleted successfully");
+        setIsDeleteDialogOpen(false);
+        setTaskToDelete(null);
+        await refreshProjectData();
+      }
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      toast.error("Failed to delete task");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openEditModal = (task: any) => {
+    // Convert project task format to Task format
+    const taskData: Task = {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
+      priority: task.priority ? task.priority.toLowerCase() as "low" | "medium" | "high" : null,
+      due_date: task.dueDate ? dayjs(task.dueDate).format("YYYY-MM-DD") : null,
+      projectId: project?.id || "",
+      created_at: task.createdAt,
+      updated_at: task.updatedAt,
+      image: task.image,
+    };
+    setEditingTask(taskData);
+    setIsTaskModalOpen(true);
   };
 
   if (!mounted || isLoading || !project) {
@@ -191,7 +294,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                 <div className="divide-y divide-border">
                     {project.tasks.length > 0 ? (
                         project.tasks.map((task) => (
-                        <div key={task.id} className="p-4 flex items-start gap-4 hover:bg-secondary/30 transition-colors group">
+                        <div key={task.id} className="p-4 flex items-start gap-4 hover:bg-secondary/50 transition-colors group">
                             <div className="mt-1">
                                 {task.status === 'DONE' ? (
                                     <CheckCircle2 className="h-5 w-5 text-foreground" />
@@ -224,12 +327,31 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                                     </p>
                                 )}
                             </div>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg px-3" asChild>
-                                        <Link href={`/tasks/${task.id}`}>
-                                            View
-                                        </Link>
-                                    </Button>
+                                <div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-zinc-200 dark:hover:bg-zinc-800">
+                                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => router.push(`/tasks/${task.id}`)}>
+                                                <Eye className="h-4 w-4 mr-2" />
+                                                View
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => openEditModal(task)}>
+                                                <Pencil className="h-4 w-4 mr-2" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => handleDeleteTask(task)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                         </div>
                         ))
@@ -274,17 +396,43 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         </TabsContent>
       </Tabs>
 
-      {/* Task Creation Modal */}
+      {/* Task Modal (Create/Edit) */}
       <TaskModal
         isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
+        onClose={() => {
+          setIsTaskModalOpen(false);
+          setEditingTask(null);
+        }}
+        task={editingTask}
         projects={[{
           id: project.id,
           name: project.name,
           color: "#000000",
         }]}
-        onSubmit={handleCreateTask}
+        onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the task "{taskToDelete?.title}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTask}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

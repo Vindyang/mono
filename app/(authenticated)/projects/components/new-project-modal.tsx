@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
+import { DatePicker } from "@/components/ui/date-picker";
 
 import { createProject } from "../componentsaction/actions"; // Import action
 import { toast } from "sonner"; // Import toast
@@ -31,7 +32,7 @@ export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#3b82f6");
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +40,8 @@ export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
     setIsSubmitting(true);
 
     try {
-      const { success, error } = await createProject(name, description, color, dueDate);
+      const dueDateString = dueDate ? dueDate.toISOString().split('T')[0] : "";
+      const { success, error } = await createProject(name, description, color, dueDateString);
 
       if (success) {
         toast.success("Project created successfully");
@@ -65,7 +67,7 @@ export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
     setName("");
     setDescription("");
     setColor("#3b82f6");
-    setDueDate("");
+    setDueDate(undefined);
   };
 
   const colors = [
@@ -131,18 +133,14 @@ export function NewProjectModal({ children, onSuccess }: NewProjectModalProps) {
             />
           </div>
           <div className="grid gap-2">
-            <label
-              htmlFor="dueDate"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Due Date
             </label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="col-span-3"
+            <DatePicker
+              date={dueDate}
+              onSelect={setDueDate}
+              placeholder="Select due date"
+              disabled={isSubmitting}
             />
           </div>
           <div className="grid gap-2">

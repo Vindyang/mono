@@ -15,10 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
+import { DatePicker } from "@/components/ui/date-picker";
 import { updateProject } from "../componentsaction/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import dayjs from "dayjs";
 
 interface EditProjectModalProps {
   project: {
@@ -38,8 +38,8 @@ export function EditProjectModal({ project, children, onSuccess }: EditProjectMo
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
   const [color, setColor] = useState(project.color);
-  const [dueDate, setDueDate] = useState(
-    project.dueDate ? dayjs(project.dueDate).format("YYYY-MM-DD") : ""
+  const [dueDate, setDueDate] = useState<Date | undefined>(
+    project.dueDate ? new Date(project.dueDate) : undefined
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,7 +48,7 @@ export function EditProjectModal({ project, children, onSuccess }: EditProjectMo
     setName(project.name);
     setDescription(project.description || "");
     setColor(project.color);
-    setDueDate(project.dueDate ? dayjs(project.dueDate).format("YYYY-MM-DD") : "");
+    setDueDate(project.dueDate ? new Date(project.dueDate) : undefined);
   }, [project]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,12 +56,13 @@ export function EditProjectModal({ project, children, onSuccess }: EditProjectMo
     setIsSubmitting(true);
 
     try {
+      const dueDateString = dueDate ? dueDate.toISOString().split('T')[0] : "";
       const { success, error } = await updateProject(
         project.id,
         name,
         description,
         color,
-        dueDate
+        dueDateString
       );
 
       if (success) {
@@ -145,18 +146,14 @@ export function EditProjectModal({ project, children, onSuccess }: EditProjectMo
             />
           </div>
           <div className="grid gap-2">
-            <label
-              htmlFor="dueDate"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Due Date
             </label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="col-span-3"
+            <DatePicker
+              date={dueDate}
+              onSelect={setDueDate}
+              placeholder="Select due date"
+              disabled={isSubmitting}
             />
           </div>
           <div className="grid gap-2">

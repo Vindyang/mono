@@ -1,47 +1,37 @@
-"use client";
-
-import { use, useEffect, useState } from "react";
-import { notFound, useRouter } from "next/navigation";
-import { INITIAL_PROJECTS, INITIAL_TASKS } from "@/lib/data";
+import { notFound } from "next/navigation";
+import { getTaskById } from "../componentsaction/actions";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, CheckCircle2, Circle, AlertCircle, Folder, Tag, Hash, MoreHorizontal, MessageSquare } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, AlertCircle, Folder, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { Separator } from "@/components/ui/separator";
+import { TaskDetailsClient } from "./task-details-client";
 
-export default function TaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const [mounted, setMounted] = useState(false);
-  const router = useRouter();
+dayjs.extend(relativeTime);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export default async function TaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const { task, project, projects, error } = await getTaskById(resolvedParams.id);
 
-  const task = INITIAL_TASKS.find((t) => t.id === resolvedParams.id);
-  const project = INITIAL_PROJECTS.find((p) => p.id === task?.projectId);
-
-  if (!task) {
-    if (mounted) notFound();
-    return null;
+  if (!task || error) {
+    notFound();
   }
-
-  if (!mounted) return null;
 
   return (
     <div className="flex flex-col gap-6 w-full p-4 md:p-6 max-w-7xl mx-auto">
       {/* Navigation & Breadcrumbs */}
       <div className="flex items-center gap-4">
-        <Button 
-            variant="ghost" 
-            size="sm"
-            className="pl-0 hover:bg-transparent hover:text-foreground text-muted-foreground group -ml-2"
-            onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-          Back
-        </Button>
+        <Link href="/tasks">
+          <Button
+              variant="ghost"
+              size="sm"
+              className="pl-0 hover:bg-transparent hover:text-foreground text-muted-foreground -ml-2"
+          >
+            Back to Tasks
+          </Button>
+        </Link>
         <div className="h-4 w-px bg-border" />
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {project ? (
@@ -61,10 +51,13 @@ export default function TaskDetailsPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="max-w-4xl mx-auto space-y-8">
-            
+
             {/* Header Section */}
             <div className="space-y-6">
-                <h1 className="text-4xl font-bold tracking-tight text-foreground">{task.title}</h1>
+                <div className="flex items-start justify-between gap-4">
+                    <h1 className="text-4xl font-bold tracking-tight text-foreground">{task.title}</h1>
+                    <TaskDetailsClient task={task} projects={projects} />
+                </div>
                 
                 {/* Meta Bar */}
                 <div className="flex flex-wrap items-center gap-4 p-4 bg-card border border-border rounded-xl shadow-sm">
