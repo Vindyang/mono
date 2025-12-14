@@ -3,15 +3,19 @@
 import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CheckCircle2, Circle, ClipboardList } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle2, Circle, ClipboardList, Plus } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import Link from "next/link";
 import dayjs from "dayjs";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProjectDetails, ProjectDetailWithTasks } from "./componentsaction/actions";
+import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
+import { createTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
+import { Task } from "@/lib/types/task";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -19,6 +23,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<ProjectDetailWithTasks | null>(null);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -49,6 +54,34 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
     fetchProjectData();
   }, [resolvedParams.id]);
+
+  const handleCreateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at">) => {
+    try {
+      const { success, task, error } = await createTask({
+        ...taskData,
+        image: taskData.image ?? null,
+      });
+
+      if (error) {
+        toast.error(error);
+        return;
+      }
+
+      if (success && task) {
+        toast.success("Task created successfully");
+        setIsTaskModalOpen(false);
+
+        // Refresh project data to show the new task
+        const { project: updatedProject, error: fetchError } = await getProjectDetails(resolvedParams.id);
+        if (updatedProject && !fetchError) {
+          setProject(updatedProject);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      toast.error("Failed to create task");
+    }
+  };
 
   if (!mounted || isLoading || !project) {
     return (
@@ -108,12 +141,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
                 {project.members.map((member) => (
-                <img
-                    key={member.id}
-                    src={member.image || `https://i.pravatar.cc/150?u=${member.id}`}
-                    alt={member.name}
-                    className="w-6 h-6 rounded-full border-2 border-background grayscale hover:grayscale-0 transition-all"
-                />
+                <Avatar key={member.id} className="w-6 h-6 border-2 border-background grayscale hover:grayscale-0 transition-all">
+                    <AvatarImage src={member.image} alt={member.name} />
+                    <AvatarFallback className="text-[10px]">{member.name.charAt(0)}</AvatarFallback>
+                </Avatar>
                 ))}
             </div>
             <span>{project.members.length} {project.members.length === 1 ? 'Member' : 'Members'}</span>
@@ -141,10 +172,20 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             {/* Tasks List */}
             <div className="flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
-                    <h2 className="font-semibold text-lg">Project Tasks</h2>
-                    <span className="text-xs font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full">
-                        {project.tasks.length}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <h2 className="font-semibold text-lg">Project Tasks</h2>
+                        <span className="text-xs font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full">
+                            {project.tasks.length}
+                        </span>
+                    </div>
+                    <Button
+                        onClick={() => setIsTaskModalOpen(true)}
+                        size="sm"
+                        className="h-8 gap-1.5"
+                    >
+                        <Plus className="h-4 w-4" />
+                        New Task
+                    </Button>
                 </div>
 
                 <div className="divide-y divide-border">
@@ -217,11 +258,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                   <div className="divide-y divide-border">
                     {project.members.map((member) => (
                       <div key={member.id} className="p-4 flex items-center gap-4">
-                        <img
-                          src={member.image || `https://i.pravatar.cc/150?u=${member.id}`}
-                          alt={member.name}
-                          className="w-10 h-10 rounded-full"
-                        />
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={member.image} alt={member.name} />
+                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
                         <div className="flex-1">
                           <h3 className="font-medium">{member.name}</h3>
                           <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
@@ -233,6 +273,18 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
              </div>
         </TabsContent>
       </Tabs>
+
+      {/* Task Creation Modal */}
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        projects={[{
+          id: project.id,
+          name: project.name,
+          color: "#000000",
+        }]}
+        onSubmit={handleCreateTask}
+      />
     </div>
   );
 }

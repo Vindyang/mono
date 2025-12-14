@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { Task } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
+import { TaskStatus, TaskPriority } from "@/generated/prisma/client";
 import dayjs from "dayjs";
 
 /**
@@ -95,6 +96,94 @@ export async function getTasksData() {
       tasks: [],
       projects: [],
       error: "Failed to load tasks data",
+    };
+  }
+}
+
+/**
+ * Creates a new task and assigns it to the current user
+ */
+export async function createTask(data: {
+  title: string;
+  description: string | null;
+  status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high" | null;
+  due_date: string | null;
+  image: string | null;
+  projectId: string;
+}) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Map status and priority to Prisma enums
+    const statusMap: Record<string, TaskStatus> = {
+      todo: TaskStatus.TODO,
+      in_progress: TaskStatus.IN_PROGRESS,
+      done: TaskStatus.DONE,
+    };
+
+    const priorityMap: Record<string, TaskPriority> = {
+      low: TaskPriority.LOW,
+      medium: TaskPriority.MEDIUM,
+      high: TaskPriority.HIGH,
+    };
+
+    // Create the task
+    const task = await prisma.task.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        status: statusMap[data.status],
+        priority: data.priority ? priorityMap[data.priority] : null,
+        dueDate: data.due_date ? new Date(data.due_date) : null,
+        image: data.image,
+        projectId: parseInt(data.projectId),
+        createdById: userId,
+        assignees: {
+          create: {
+            userId: userId,
+          },
+        },
+      },
+      include: {
+        project: true,
+      },
+    });
+
+    // Transform to Task type
+    const createdTask: Task = {
+      id: task.id.toString(),
+      title: task.title,
+      description: task.description,
+      status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
+      priority: task.priority ? (task.priority.toLowerCase() as "low" | "medium" | "high") : null,
+      due_date: task.dueDate ? dayjs(task.dueDate).format("YYYY-MM-DD") : null,
+      projectId: task.projectId.toString(),
+      created_at: dayjs(task.createdAt).format("YYYY-MM-DD"),
+      updated_at: dayjs(task.updatedAt).format("YYYY-MM-DD"),
+      image: task.image,
+    };
+
+    return {
+      success: true,
+      task: createdTask,
+    };
+  } catch (error) {
+    console.error("Failed to create task:", error);
+    return {
+      success: false,
+      error: "Failed to create task",
     };
   }
 }

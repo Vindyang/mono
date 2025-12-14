@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -349,25 +350,19 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
             <label className="block text-xs font-medium text-muted-foreground mb-2 tracking-wide">
               DUE DATE
             </label>
-            <Input
-              type="date"
-              value={
-                formData.dueDate
-                  ? formData.dueDate.toISOString().split("T")[0]
-                  : ""
-              }
-              onChange={(e) =>
+            <DatePicker
+              date={formData.dueDate}
+              onSelect={(date) =>
                 setFormData({
                   ...formData,
-                  dueDate: e.target.value
-                    ? new Date(e.target.value)
-                    : undefined,
+                  dueDate: date,
                 })
               }
-              className={`${
-                errors.dueDate ? "border-destructive" : "border-input"
-              }`}
+              placeholder="Select due date"
               disabled={isSubmitting}
+              className={`${
+                errors.dueDate ? "border-destructive" : ""
+              }`}
             />
             {errors.dueDate && (
               <p className="text-destructive text-xs mt-1">{errors.dueDate}</p>
