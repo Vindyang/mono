@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { notFound, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CheckCircle2, Circle, ClipboardList, Plus, Eye, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Calendar, ClipboardList, Plus } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import Link from "next/link";
@@ -16,12 +16,7 @@ import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
 import { createTask, updateTask, deleteTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
 import { Task } from "@/lib/types/task";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { TaskCard } from "@/components/task-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,11 +78,17 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const handleCreateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleCreateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at"> & { assigneeIds?: string[] }) => {
     try {
       const { success, task, error } = await createTask({
-        ...taskData,
+        title: taskData.title,
+        description: taskData.description,
+        status: taskData.status,
+        priority: taskData.priority,
+        due_date: taskData.due_date,
         image: taskData.image ?? null,
+        projectId: taskData.projectId,
+        assigneeIds: taskData.assigneeIds,
       });
 
       if (error) {
@@ -106,7 +107,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const handleUpdateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleUpdateTask = async (taskData: Omit<Task, "id" | "created_at" | "updated_at"> & { assigneeIds?: string[] }) => {
     if (!editingTask) return;
 
     try {
@@ -118,6 +119,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         due_date: taskData.due_date ?? null,
         image: taskData.image ?? null,
         projectId: taskData.projectId,
+        assigneeIds: taskData.assigneeIds,
       });
 
       if (error) {
@@ -197,6 +199,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const progress = project.taskCount > 0
     ? (project.completedTaskCount / project.taskCount) * 100
     : 0;
+
+  const canEditTasks = project.currentUserRole !== "MEMBER";
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-6rem)] gap-4 md:gap-6 p-4 md:p-6">
@@ -294,66 +298,24 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                 <div className="divide-y divide-border">
                     {project.tasks.length > 0 ? (
                         project.tasks.map((task) => (
-                        <div key={task.id} className="p-4 flex items-start gap-4 hover:bg-secondary/50 transition-colors group">
-                            <div className="mt-1">
-                                {task.status === 'DONE' ? (
-                                    <CheckCircle2 className="h-5 w-5 text-foreground" />
-                                ) : (
-                                    <Circle className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                )}
-                            </div>
-                            <div className="flex-1 space-y-1.5">
-                                <h3 className={`font-medium text-foreground leading-tight ${task.status === 'DONE' ? 'text-muted-foreground line-through' : ''}`}>
-                                    {task.title}
-                                </h3>
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                    <span className="font-mono">#{task.id}</span>
-                                    {task.priority && (
-                                        <>
-                                            <span>•</span>
-                                            <span className="capitalize">{task.priority} Priority</span>
-                                        </>
-                                    )}
-                                    {task.dueDate && (
-                                        <>
-                                            <span>•</span>
-                                            <span>Due {dayjs(task.dueDate).format("DD/MM/YYYY")}</span>
-                                        </>
-                                    )}
-                                </div>
-                                {task.description && (
-                                    <p className="text-sm text-muted-foreground line-clamp-2">
-                                        {task.description}
-                                    </p>
-                                )}
-                            </div>
-                                <div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-zinc-200 dark:hover:bg-zinc-800">
-                                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => router.push(`/tasks/${task.id}`)}>
-                                                <Eye className="h-4 w-4 mr-2" />
-                                                View
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => openEditModal(task)}>
-                                                <Pencil className="h-4 w-4 mr-2" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() => handleDeleteTask(task)}
-                                                className="text-destructive focus:text-destructive"
-                                            >
-                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                        </div>
+                            <TaskCard
+                                key={task.id}
+                                task={{
+                                    id: task.id,
+                                    title: task.title,
+                                    description: task.description,
+                                    status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
+                                    priority: task.priority?.toLowerCase() as "low" | "medium" | "high" | undefined,
+                                    dueDate: task.dueDate,
+                                    assignees: task.assignees,
+                                }}
+                                showProject={false}
+                                showDescription={true}
+                                onView={() => router.push(`/tasks/${task.id}`)}
+                                onEdit={canEditTasks ? () => openEditModal(task) : undefined}
+                                onDelete={canEditTasks ? () => handleDeleteTask(task) : undefined}
+                                clickable={true}
+                            />
                         ))
                     ) : (
                         <div className="p-12">
@@ -385,7 +347,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                           <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <h3 className="font-medium">{member.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium">{member.name}</h3>
+                            <span className="text-sm text-muted-foreground">({member.email})</span>
+                          </div>
                           <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
                         </div>
                       </div>
@@ -409,6 +374,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           name: project.name,
           color: "#000000",
         }]}
+        projectMembers={project.members}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
       />
 

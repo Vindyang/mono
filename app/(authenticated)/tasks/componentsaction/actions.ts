@@ -40,6 +40,18 @@ export async function getTasksData() {
       },
       include: {
         project: true,
+        assignees: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: "desc", // Default sorting for tasks page (can be changed)
@@ -77,6 +89,12 @@ export async function getTasksData() {
       created_at: dayjs(t.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(t.updatedAt).format("YYYY-MM-DD"),
       image: t.image,
+      assignees: t.assignees.map((a) => ({
+        id: a.user.id,
+        name: a.user.name,
+        email: a.user.email,
+        image: a.user.image || undefined,
+      })),
     }));
 
     const projects: Project[] = projectsData.map((p) => ({
@@ -114,6 +132,7 @@ export async function getTaskById(taskId: string) {
         task: null,
         project: null,
         projects: [],
+        currentUserRole: null,
         error: "Unauthorized",
       };
     }
@@ -131,7 +150,31 @@ export async function getTaskById(taskId: string) {
         },
       },
       include: {
-        project: true,
+        project: {
+          include: {
+            members: {
+              include: {
+                workspaceMember: {
+                  select: {
+                    userId: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        assignees: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -140,6 +183,7 @@ export async function getTaskById(taskId: string) {
         task: null,
         project: null,
         projects: [],
+        currentUserRole: null,
         error: "Task not found",
       };
     }
@@ -173,7 +217,22 @@ export async function getTaskById(taskId: string) {
       created_at: dayjs(taskData.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(taskData.updatedAt).format("YYYY-MM-DD"),
       image: taskData.image,
+      assignees: taskData.assignees.map((a) => ({
+        id: a.user.id,
+        name: a.user.name,
+        email: a.user.email,
+        image: a.user.image || undefined,
+      })),
     };
+
+    // Find current user's role in the project
+    let currentUserRole = null;
+    if (taskData.project) {
+      const currentUserMember = taskData.project.members.find(
+        (m) => m.workspaceMember.userId === userId
+      );
+      currentUserRole = currentUserMember?.role || "MEMBER";
+    }
 
     // Transform project data
     const project: Project | null = taskData.project ? {
@@ -195,12 +254,14 @@ export async function getTaskById(taskId: string) {
       task,
       project,
       projects,
+      currentUserRole,
     };
   } catch (error) {
     console.error("Failed to fetch task:", error);
     return {
       task: null,
       project: null,
+      currentUserRole: null,
       projects: [],
       error: "Failed to load task",
     };
@@ -218,6 +279,7 @@ export async function createTask(data: {
   due_date: string | null;
   image: string | null;
   projectId: string;
+  assigneeIds?: string[];
 }) {
   try {
     const session = await auth.api.getSession({
@@ -246,6 +308,11 @@ export async function createTask(data: {
       high: TaskPriority.HIGH,
     };
 
+    // Determine assignees: use provided IDs or default to creator
+    const assigneeUserIds = data.assigneeIds && data.assigneeIds.length > 0
+      ? data.assigneeIds
+      : [userId];
+
     // Create the task
     const task = await prisma.task.create({
       data: {
@@ -258,9 +325,7 @@ export async function createTask(data: {
         projectId: parseInt(data.projectId),
         createdById: userId,
         assignees: {
-          create: {
-            userId: userId,
-          },
+          create: assigneeUserIds.map((id) => ({ userId: id })),
         },
       },
       include: {
@@ -308,6 +373,7 @@ export async function updateTask(
     due_date: string | null;
     image: string | null;
     projectId: string;
+    assigneeIds?: string[];
   }
 ) {
   try {
@@ -356,7 +422,7 @@ export async function updateTask(
       high: TaskPriority.HIGH,
     };
 
-    // Update the task
+    // Update the task and assignees if provided
     const task = await prisma.task.update({
       where: {
         id: parseInt(taskId),
@@ -369,6 +435,12 @@ export async function updateTask(
         dueDate: data.due_date ? new Date(data.due_date) : null,
         image: data.image,
         projectId: parseInt(data.projectId),
+        ...(data.assigneeIds && {
+          assignees: {
+            deleteMany: {},
+            create: data.assigneeIds.map((id) => ({ userId: id })),
+          },
+        }),
       },
       include: {
         project: true,

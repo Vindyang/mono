@@ -1,19 +1,20 @@
 import { notFound } from "next/navigation";
 import { getTaskById } from "../componentsaction/actions";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle2, Circle, AlertCircle, Folder, MessageSquare } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, AlertCircle, Folder, MessageSquare, Users } from "lucide-react";
 import Link from "next/link";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskDetailsClient } from "./task-details-client";
 
 dayjs.extend(relativeTime);
 
 export default async function TaskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
-  const { task, project, projects, error } = await getTaskById(resolvedParams.id);
+  const { task, project, projects, currentUserRole, error } = await getTaskById(resolvedParams.id);
 
   if (!task || error) {
     notFound();
@@ -56,7 +57,7 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
             <div className="space-y-6">
                 <div className="flex items-start justify-between gap-4">
                     <h1 className="text-4xl font-bold tracking-tight text-foreground">{task.title}</h1>
-                    <TaskDetailsClient task={task} projects={projects} />
+                    <TaskDetailsClient task={task} projects={projects} currentUserRole={currentUserRole} />
                 </div>
                 
                 {/* Meta Bar */}
@@ -107,6 +108,30 @@ export default async function TaskDetailsPage({ params }: { params: Promise<{ id
                         </>
                     )}
                 </div>
+
+                {/* Assignees Section */}
+                {task.assignees && task.assignees.length > 0 && (
+                    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                        <h2 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            ASSIGNED TO
+                        </h2>
+                        <div className="flex flex-wrap gap-3">
+                            {task.assignees.map((assignee) => (
+                                <div key={assignee.id} className="flex items-center gap-3 bg-secondary/50 rounded-lg px-4 py-2.5 hover:bg-secondary transition-colors">
+                                    <Avatar className="w-8 h-8">
+                                        <AvatarImage src={assignee.image} alt={assignee.name} />
+                                        <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-foreground">{assignee.name}</span>
+                                        <span className="text-xs text-muted-foreground">{assignee.email}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Description Card */}

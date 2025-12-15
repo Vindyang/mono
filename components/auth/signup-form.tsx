@@ -19,20 +19,30 @@ import { useSession } from "@/lib/auth/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
+interface SignupFormProps extends React.ComponentProps<"div"> {
+  inviteId?: string;
+}
+
 export function SignupForm({
   className,
+  inviteId,
   ...props
-}: React.ComponentProps<"div">) {
+}: SignupFormProps) {
   const [state, action, pending] = useActionState(signup, undefined);
   const { data: session } = useSession();
   const router = useRouter();
 
   // Redirect to dashboard if already authenticated
+  // If there's an inviteId, redirect to accept invitation instead
   useEffect(() => {
     if (session) {
-      router.push("/dashboard");
+      if (inviteId) {
+        router.push(`/invite/${inviteId}?accept=true`);
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [session, router]);
+  }, [session, router, inviteId]);
 
   // Show toast notifications for system errors
   useEffect(() => {
@@ -77,9 +87,10 @@ export function SignupForm({
             </a>
             <h1 className="text-xl font-bold">Welcome to Mono</h1>
             <FieldDescription>
-              Already have an account? <a href="/login">Sign in</a>
+              Already have an account? <a href={inviteId ? `/login?inviteId=${inviteId}` : "/login"}>Sign in</a>
             </FieldDescription>
           </div>
+          {inviteId && <input type="hidden" name="inviteId" value={inviteId} />}
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input

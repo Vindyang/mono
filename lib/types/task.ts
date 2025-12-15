@@ -9,6 +9,12 @@ export interface Task {
   projectId: string;
   created_at: string;
   updated_at: string;
+  assignees?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  }>;
 }
 
 export interface TaskFormData {
@@ -19,6 +25,7 @@ export interface TaskFormData {
   dueDate?: Date;
   image?: string | null;
   projectId: string;
+  assigneeIds?: string[];
 }
 
 export interface TaskFilters {

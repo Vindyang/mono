@@ -7,6 +7,29 @@ import { TeamMember } from "@/lib/types/team";
 import dayjs from "dayjs";
 import { sendInvitationEmail } from "@/lib/email/send";
 
+// Type-safe role mapping
+const ROLE_MAP = {
+  OWNER: "Owner",
+  ADMIN: "Admin",
+  MEMBER: "Member",
+  VIEWER: "Viewer",
+} as const;
+
+// Type-safe invitation status mapping
+const INVITATION_STATUS_MAP = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  EXPIRED: "expired",
+  CANCELLED: "cancelled",
+} as const;
+
+// Type-safe member status mapping
+const MEMBER_STATUS_MAP = {
+  ACTIVE: "active",
+  OFFLINE: "offline",
+  BUSY: "busy",
+} as const;
+
 export interface TeamStatsData {
   totalMembers: number;
   activeMembers: number;
@@ -27,7 +50,12 @@ export async function getTeamData() {
     if (!session?.user) {
       return {
         members: [],
-        stats: { totalMembers: 0, activeMembers: 0, pendingInvites: 0, newMembersLastMonth: 0 },
+        stats: {
+          totalMembers: 0,
+          activeMembers: 0,
+          pendingInvites: 0,
+          newMembersLastMonth: 0,
+        },
         error: "Unauthorized",
       };
     }
@@ -44,7 +72,12 @@ export async function getTeamData() {
     if (!userMembership) {
       return {
         members: [],
-        stats: { totalMembers: 0, activeMembers: 0, pendingInvites: 0, newMembersLastMonth: 0 },
+        stats: {
+          totalMembers: 0,
+          activeMembers: 0,
+          pendingInvites: 0,
+          newMembersLastMonth: 0,
+        },
         // error: "User does not belong to any workspace", // Don't error, just return empty
       };
     }
@@ -62,10 +95,10 @@ export async function getTeamData() {
           include: {
             project: {
               select: {
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
       },
       orderBy: {
@@ -89,25 +122,27 @@ export async function getTeamData() {
       name: m.user.name,
       avatarUrl: m.user.image || "", // Mapped to avatarUrl
       email: m.user.email,
-      role: m.role.charAt(0) + m.role.slice(1).toLowerCase() as any, // "MEMBER" -> "Member" (casting to any/specific union)
-      status: m.status.toLowerCase() as "active" | "offline" | "busy",
+      role: ROLE_MAP[m.role],
+      status: MEMBER_STATUS_MAP[m.status],
       joinedAt: dayjs(m.joinedAt).format("YYYY-MM-DD"),
-      projects: m.projectAssignments.map(pa => ({
+      projects: m.projectAssignments.map((pa) => ({
         id: pa.projectId.toString(),
-        name: pa.project.name
+        name: pa.project.name,
       })),
     }));
 
     // 5. Calculate Stats
     const totalMembers = members.length;
     const activeMembers = members.filter((m) => m.status === "active").length;
-    const oneMonthAgo = dayjs().subtract(1, 'month');
-    const newMembersLastMonth = members.filter((m) => dayjs(m.joinedAt).isAfter(oneMonthAgo)).length;
+    const oneMonthAgo = dayjs().subtract(1, "month");
+    const newMembersLastMonth = members.filter((m) =>
+      dayjs(m.joinedAt).isAfter(oneMonthAgo)
+    ).length;
 
     return {
       members,
       currentUserId: userId,
-      currentUserRole: userMembership.role.charAt(0) + userMembership.role.slice(1).toLowerCase() as any,
+      currentUserRole: ROLE_MAP[userMembership.role],
       stats: {
         totalMembers,
         activeMembers,
@@ -119,7 +154,12 @@ export async function getTeamData() {
     console.error("Failed to fetch team data:", error);
     return {
       members: [],
-      stats: { totalMembers: 0, activeMembers: 0, pendingInvites: 0, newMembersLastMonth: 0 },
+      stats: {
+        totalMembers: 0,
+        activeMembers: 0,
+        pendingInvites: 0,
+        newMembersLastMonth: 0,
+      },
       error: "Failed to load team data",
     };
   }
@@ -151,8 +191,8 @@ export async function getInvitationsData() {
 
     if (!userMembership) {
       return {
-         invitations: [],
-         // No error needed, just empty list
+        invitations: [],
+        // No error needed, just empty list
       };
     }
 
@@ -177,8 +217,8 @@ export async function getInvitationsData() {
     const invitations = invitationsData.map((inv) => ({
       id: inv.id.toString(),
       email: inv.email,
-      role: inv.role.charAt(0) + inv.role.slice(1).toLowerCase() as any,
-      status: inv.status.toLowerCase() as any,
+      role: ROLE_MAP[inv.role],
+      status: INVITATION_STATUS_MAP[inv.status],
       invitedBy: inv.invitedBy.name,
       invitedAt: inv.invitedAt.toISOString(),
     }));
@@ -186,13 +226,12 @@ export async function getInvitationsData() {
     return {
       invitations,
     };
-
   } catch (error) {
     console.error("Failed to fetch invitations:", error);
-     return {
-        invitations: [],
-        error: "Failed to load invitations",
-      };
+    return {
+      invitations: [],
+      error: "Failed to load invitations",
+    };
   }
 }
 
@@ -276,7 +315,11 @@ export async function createInvitation(
     }
 
     // Convert role string to enum
-    const roleEnum = role.toUpperCase() as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+    const roleEnum = role.toUpperCase() as
+      | "OWNER"
+      | "ADMIN"
+      | "MEMBER"
+      | "VIEWER";
 
     // Convert project IDs to integers
     const projectIdsInt = projectIds.map((id) => parseInt(id, 10));
@@ -347,10 +390,10 @@ export async function createInvitation(
       invitationId: invitation.id,
     };
   } catch (error) {
-    console.error("Failed to create invitation:", error);
+    console.error("Failed to send invitation:", error);
     return {
       success: false,
-      error: "Failed to create invitation",
+      error: error instanceof Error ? error.message : "Failed to send invitation",
     };
   }
 }

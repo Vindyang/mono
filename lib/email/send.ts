@@ -1,7 +1,8 @@
-import { Resend } from "resend";
+import * as brevo from "@getbrevo/brevo";
 import { getInvitationEmailHtml, getInvitationEmailText } from "./templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const apiInstance = new brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY || "");
 
 interface SendInvitationEmailParams {
   to: string;
@@ -50,49 +51,34 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
       projectNames,
     });
 
-    // Send email using Resend
-    const emailFrom = process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL;
+    // Send email using Brevo
+    const emailFrom = process.env.EMAIL_FROM || "noreply@example.com";
+    const fromName = process.env.EMAIL_FROM_NAME || "Your App";
 
-    if (!emailFrom) {
-      console.error("EMAIL_FROM or RESEND_FROM_EMAIL environment variable is not set");
-      // Fall back to logging in development
-      if (process.env.NODE_ENV === "development") {
-        console.log("========================================");
-        console.log("INVITATION EMAIL (Development Mode - No EMAIL_FROM)");
-        console.log("========================================");
-        console.log("To:", to);
-        console.log("Subject:", `You're invited to join ${workspaceName}`);
-        console.log("Invitation URL:", invitationUrl);
-        console.log("Expires:", expiresAt.toLocaleString());
-        if (projectNames && projectNames.length > 0) {
-          console.log("Projects:", projectNames.join(", "));
-        }
-        console.log("========================================");
-        return { success: true };
-      }
-      return {
-        success: false,
-        error: "Email sender address not configured",
-      };
+    // Log invitation details for debugging
+    console.log("========================================");
+    console.log("SENDING INVITATION EMAIL");
+    console.log("========================================");
+    console.log("To:", to);
+    console.log("From:", emailFrom);
+    console.log("Subject:", `You're invited to join ${workspaceName}`);
+    console.log("Invitation URL:", invitationUrl);
+    console.log("Expires:", expiresAt.toLocaleString());
+    if (projectNames && projectNames.length > 0) {
+      console.log("Projects:", projectNames.join(", "));
     }
+    console.log("========================================");
 
-    const { data, error } = await resend.emails.send({
-      from: emailFrom,
-      to: to,
-      subject: `You're invited to join ${workspaceName}`,
-      html: htmlContent,
-      text: textContent,
-    });
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = { email: emailFrom, name: fromName };
+    sendSmtpEmail.to = [{ email: to }];
+    sendSmtpEmail.subject = `You're invited to join ${workspaceName}`;
+    sendSmtpEmail.htmlContent = htmlContent;
+    sendSmtpEmail.textContent = textContent;
 
-    if (error) {
-      console.error("Resend email error:", error);
-      return {
-        success: false,
-        error: error.message || "Failed to send email",
-      };
-    }
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    console.log("Invitation email sent successfully:", data?.id);
+    console.log("Invitation email sent successfully:", result.body?.messageId);
     return {
       success: true,
     };
@@ -107,7 +93,8 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
 
 /**
  * Required environment variables:
- * - RESEND_API_KEY: Your Resend API key from resend.com
- * - EMAIL_FROM or RESEND_FROM_EMAIL: Verified sender email (e.g., "noreply@yourdomain.com")
+ * - BREVO_API_KEY: Your Brevo API key from app.brevo.com
+ * - EMAIL_FROM: Sender email (e.g., "noreply@yourdomain.com" or use Brevo's default)
+ * - EMAIL_FROM_NAME: Sender name (e.g., "Your App Name")
  * - NEXT_PUBLIC_APP_URL: Your application URL for invitation links
  */

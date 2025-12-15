@@ -29,9 +29,10 @@ import { toast } from "sonner";
 interface TaskDetailsClientProps {
   task: Task;
   projects: Project[];
+  currentUserRole: string | null;
 }
 
-export function TaskDetailsClient({ task, projects }: TaskDetailsClientProps) {
+export function TaskDetailsClient({ task, projects, currentUserRole }: TaskDetailsClientProps) {
   const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -70,6 +71,13 @@ export function TaskDetailsClient({ task, projects }: TaskDetailsClientProps) {
       setIsDeleting(false);
     }
   };
+
+  const canEditTask = currentUserRole !== "MEMBER";
+
+  // Don't show the menu if user is a member
+  if (!canEditTask) {
+    return null;
+  }
 
   return (
     <>

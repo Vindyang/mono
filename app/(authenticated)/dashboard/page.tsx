@@ -2,18 +2,10 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { TaskFilters } from "@/components/task-filters";
-import { PriorityBadge } from "@/components/ui/priority-badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, Trash2, CheckCircle2, Timer, Circle } from "lucide-react";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
+import { TaskCard } from "@/components/task-card";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -214,17 +206,6 @@ function DashboardContent() {
     return acc;
   }, {} as Record<string, Record<string, Task[]>>);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "done":
-        return <CheckCircle2 className="h-5 w-5 text-primary" />;
-      case "in_progress":
-        return <Timer className="h-5 w-5 text-blue-500" />;
-      case "todo":
-      default:
-        return <Circle className="h-5 w-5 text-muted-foreground" />;
-    }
-  };
 
   if (!mounted || isLoading) {
     return (
@@ -281,8 +262,8 @@ function DashboardContent() {
 
       {/* Task List */}
       <div className="space-y-6">
-        {Object.entries(groupedTasks).flatMap(([date, projects]) =>
-          Object.entries(projects).map(([project, projectTasks]) => (
+        {Object.entries(groupedTasks).flatMap(([date, projectsGroup]) =>
+          Object.entries(projectsGroup).map(([project, projectTasks]) => (
             <div
               key={`${date}-${project}`}
               className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
@@ -307,81 +288,29 @@ function DashboardContent() {
                 </div>
               </div>
               <div className="divide-y divide-border">
-                <div className="group relative">
-                  {projectTasks.map((task, index) => (
-                    <div
+                {projectTasks.map((task) => {
+                  const taskProject = projects.find((p: Project) => p.id === task.projectId);
+                  return (
+                    <TaskCard
                       key={task.id}
-                      className="relative p-4 hover:bg-secondary/30 transition-colors flex items-center gap-4 group/item"
-                    >
-                      {/* Grouping Indicator */}
-                      {projectTasks.length > 1 && (
-                        <div className="absolute left-0 top-0 bottom-0 w-16 flex flex-col items-center">
-                          {index === 0 ? (
-                            <>
-                              <div className="w-6 h-6 mt-4 rounded-md border-2 border-primary/20 flex items-center justify-center text-xs font-bold text-primary bg-background z-10">
-                                {projectTasks.length}
-                              </div>
-                              <div className="w-0.5 bg-primary/20 flex-1 -mt-1" />
-                            </>
-                          ) : (
-                            <>
-                              <div className="w-0.5 bg-primary/20 h-full absolute top-0 left-1/2 -translate-x-1/2" style={{ height: index === projectTasks.length - 1 ? 'calc(50% - 0.5rem)' : '100%' }} />
-                              <div className="absolute top-1/2 left-1/2 w-4 h-4 border-b-2 border-l-2 border-primary/20 rounded-bl-xl -translate-y-1/2 -ml-px" />
-                            </>
-                          )}
-                        </div>
-                      )}
-
-                      <div className={`flex-1 ${projectTasks.length > 1 ? "pl-16" : ""}`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-medium text-foreground">
-                              {task.title}
-                            </h3>
-                            <div className="flex items-center gap-1.5">
-                              {getStatusIcon(task.status)}
-                              <span className="capitalize text-xs text-muted-foreground">
-                                {task.status.replace("_", " ")}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {task.priority && (
-                              <PriorityBadge priority={task.priority} />
-                            )}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 transition-opacity"
-                                >
-                                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openEditModal(task)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => handleDeleteTask(task)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1 mb-3">
-                          {task.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      task={{
+                        id: task.id,
+                        title: task.title,
+                        description: task.description,
+                        status: task.status,
+                        priority: task.priority,
+                        dueDate: task.due_date || undefined,
+                        assignees: task.assignees,
+                      }}
+                      project={taskProject}
+                      showProject={true}
+                      showDescription={true}
+                      onEdit={() => openEditModal(task)}
+                      onDelete={() => handleDeleteTask(task)}
+                      clickable={false}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))

@@ -1,28 +1,45 @@
 import { redirect } from "next/navigation";
 import { acceptInvitation } from "@/app/(authenticated)/team/componentsaction/actions";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { CheckCircle, XCircle, Mail } from "lucide-react";
 import Link from "next/link";
 
 interface InvitePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     accept?: string;
-  };
+  }>;
 }
 
-export default async function InvitePage({ params, searchParams }: InvitePageProps) {
-  const invitationId = params.id;
-  const shouldAccept = searchParams.accept === "true";
+export default async function InvitePage({
+  params,
+  searchParams,
+}: InvitePageProps) {
+  const { id: invitationId } = await params;
+  const { accept } = await searchParams;
+  const shouldAccept = accept === "true";
 
   let result = null;
   let isAccepted = false;
 
   if (shouldAccept) {
     result = await acceptInvitation(invitationId);
+
+    // If user is not authenticated, redirect to login with invitation context
+    if (!result.success && result.error === "Unauthorized - Please log in") {
+      redirect(`/login?inviteId=${invitationId}`);
+    }
+
     isAccepted = result.success;
 
     if (result.success && result.workspaceSlug) {
@@ -42,14 +59,16 @@ export default async function InvitePage({ params, searchParams }: InvitePagePro
               </div>
               <CardTitle>You've Been Invited!</CardTitle>
               <CardDescription>
-                You've been invited to join a workspace. Click the button below to accept the invitation.
+                You've been invited to join a workspace. Click the button below
+                to accept the invitation.
               </CardDescription>
             </CardHeader>
             <CardFooter className="flex flex-col gap-3">
-              <Link href={`/invite/${invitationId}?accept=true`} className="w-full">
-                <Button className="w-full">
-                  Accept Invitation
-                </Button>
+              <Link
+                href={`/invite/${invitationId}?accept=true`}
+                className="w-full"
+              >
+                <Button className="w-full">Accept Invitation</Button>
               </Link>
               <Link href="/" className="w-full">
                 <Button variant="outline" className="w-full">
@@ -71,9 +90,7 @@ export default async function InvitePage({ params, searchParams }: InvitePagePro
             </CardHeader>
             <CardFooter>
               <Link href="/dashboard" className="w-full">
-                <Button className="w-full">
-                  Go to Dashboard
-                </Button>
+                <Button className="w-full">Go to Dashboard</Button>
               </Link>
             </CardFooter>
           </>
@@ -90,9 +107,7 @@ export default async function InvitePage({ params, searchParams }: InvitePagePro
             </CardHeader>
             <CardFooter className="flex flex-col gap-3">
               <Link href="/" className="w-full">
-                <Button className="w-full">
-                  Go to Home
-                </Button>
+                <Button className="w-full">Go to Login</Button>
               </Link>
             </CardFooter>
           </>

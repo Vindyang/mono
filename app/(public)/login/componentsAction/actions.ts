@@ -14,6 +14,7 @@ export async function login(
   formData: FormData
 ): Promise<ActionState> {
   const email = formData.get("email") as string;
+  const inviteId = formData.get("inviteId") as string | null;
 
   if (!email) {
     return { error: "Email is required" };
@@ -37,7 +38,10 @@ export async function login(
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 
     // Send magic link via our custom endpoint that checks for auto-login
-    const callbackUrl = `${protocol}://${host}/dashboard`;
+    // If inviteId exists, redirect to invitation acceptance after login
+    const callbackUrl = inviteId
+      ? `${protocol}://${host}/invite/${inviteId}?accept=true`
+      : `${protocol}://${host}/dashboard`;
 
     const response = await fetch(`${protocol}://${host}/api/auth/login-with-check`, {
       method: "POST",

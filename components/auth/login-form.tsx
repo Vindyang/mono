@@ -19,20 +19,30 @@ import { useSession } from "@/lib/auth/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
+interface LoginFormProps extends React.ComponentProps<"div"> {
+  inviteId?: string;
+}
+
 export function LoginForm({
   className,
+  inviteId,
   ...props
-}: React.ComponentProps<"div">) {
+}: LoginFormProps) {
   const [state, action, pending] = useActionState(login, undefined);
   const { data: session } = useSession();
   const router = useRouter();
 
   // Redirect to dashboard if already authenticated
+  // If there's an inviteId, redirect to accept invitation instead
   useEffect(() => {
     if (session) {
-      router.push("/dashboard");
+      if (inviteId) {
+        router.push(`/invite/${inviteId}?accept=true`);
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [session, router]);
+  }, [session, router, inviteId]);
 
   // Show toast notifications for specific error types
   useEffect(() => {
@@ -40,13 +50,13 @@ export function LoginForm({
       toast.error(state.error || "No account found with this email.", {
         action: {
           label: "Sign up",
-          onClick: () => router.push("/signup"),
+          onClick: () => router.push(inviteId ? `/signup?inviteId=${inviteId}` : "/signup"),
         },
       });
     } else if (state?.errorType === "system") {
       toast.error(state.error || "Something went wrong. Please try again.");
     }
-  }, [state?.errorType, state?.error, router]);
+  }, [state?.errorType, state?.error, router, inviteId]);
 
   // Handle auto-login for users who logged in recently
   useEffect(() => {
@@ -109,9 +119,10 @@ export function LoginForm({
             </a>
             <h1 className="text-xl font-bold">Welcome to Mono</h1>
             <FieldDescription>
-              Don&apos;t have an account? <a href="/signup">Sign up</a>
+              Don&apos;t have an account? <a href={inviteId ? `/signup?inviteId=${inviteId}` : "/signup"}>Sign up</a>
             </FieldDescription>
           </div>
+          {inviteId && <input type="hidden" name="inviteId" value={inviteId} />}
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input

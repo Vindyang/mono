@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Image as ImageIcon } from "lucide-react";
+import { X, Image as ImageIcon, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,19 +21,30 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Task, TaskFormData } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
+
+interface ProjectMember {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  role: string;
+}
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   task?: Task | null;
   projects: Project[];
+  projectMembers?: ProjectMember[];
   onSubmit: (data: Omit<Task, "id" | "created_at" | "updated_at">) => void;
   initialDate?: string;
 }
 
-export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDate }: TaskModalProps) {
+export function TaskModal({ isOpen, onClose, task, projects, projectMembers = [], onSubmit, initialDate }: TaskModalProps) {
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
     description: "",
@@ -42,6 +53,7 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
     dueDate: undefined,
     image: null,
     projectId: "",
+    assigneeIds: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -58,6 +70,7 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
         dueDate: task.due_date ? new Date(task.due_date) : undefined,
         image: task.image || null,
         projectId: task.projectId,
+        assigneeIds: task.assignees ? task.assignees.map(a => a.id) : [],
       });
     } else {
       setFormData({
@@ -68,6 +81,7 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
         dueDate: initialDate ? new Date(initialDate) : undefined,
         image: null,
         projectId: projects.length > 0 ? projects[0].id : "",
+        assigneeIds: [],
       });
     }
     setErrors({});
@@ -138,6 +152,7 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
         due_date: formData.dueDate ? formData.dueDate.toISOString() : null,
         image: formData.image || null,
         projectId: formData.projectId,
+        assigneeIds: formData.assigneeIds,
       };
 
       await onSubmit(taskData);
@@ -219,6 +234,100 @@ export function TaskModal({ isOpen, onClose, task, projects, onSubmit, initialDa
               <p className="text-destructive text-xs mt-1">{errors.projectId}</p>
             )}
           </div>
+
+          {/* Assignees */}
+          {projectMembers.length > 0 && (
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-2 tracking-wide">
+                ASSIGNEES
+              </label>
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2 min-h-[42px] border border-input rounded-md p-2">
+                  {formData.assigneeIds && formData.assigneeIds.length > 0 ? (
+                    formData.assigneeIds.map((assigneeId) => {
+                      const member = projectMembers.find(m => m.id === assigneeId);
+                      if (!member) return null;
+                      return (
+                        <Badge
+                          key={assigneeId}
+                          variant="secondary"
+                          className="flex items-center gap-1.5 px-2 py-1"
+                        >
+                          <Avatar className="w-4 h-4">
+                            <AvatarImage src={member.image} alt={member.name} />
+                            <AvatarFallback className="text-[8px]">{member.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs">{member.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                assigneeIds: formData.assigneeIds?.filter(id => id !== assigneeId) || []
+                              });
+                            }}
+                            className="ml-1 hover:text-destructive"
+                            disabled={isSubmitting}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })
+                  ) : (
+                    <span className="text-xs text-muted-foreground flex items-center gap-2">
+                      <User className="h-3 w-3" />
+                      No assignees selected
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border border-border rounded-md p-2">
+                  {projectMembers.map((member) => {
+                    const isSelected = formData.assigneeIds?.includes(member.id);
+                    return (
+                      <button
+                        key={member.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setFormData({
+                              ...formData,
+                              assigneeIds: formData.assigneeIds?.filter(id => id !== member.id) || []
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              assigneeIds: [...(formData.assigneeIds || []), member.id]
+                            });
+                          }
+                        }}
+                        className={`flex items-center gap-3 p-2 rounded-md hover:bg-secondary transition-colors text-left ${
+                          isSelected ? 'bg-secondary' : ''
+                        }`}
+                        disabled={isSubmitting}
+                      >
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={member.image} alt={member.name} />
+                          <AvatarFallback className="text-[10px]">{member.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{member.name}</div>
+                          <div className="text-xs text-muted-foreground truncate">{member.email}</div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           <div>

@@ -12,6 +12,7 @@ export async function signup(
   formData: FormData
 ): Promise<ActionState> {
   const email = formData.get("email") as string;
+  const inviteId = formData.get("inviteId") as string | null;
 
   if (!email) {
     return { error: "Email is required" };
@@ -22,7 +23,10 @@ export async function signup(
     const headersList = await headers();
     const host = headersList.get("host") || "localhost:3000";
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    const callbackUrl = `${protocol}://${host}/dashboard`;
+    // If inviteId exists, redirect to invitation acceptance after signup
+    const callbackUrl = inviteId
+      ? `${protocol}://${host}/invite/${inviteId}?accept=true`
+      : `${protocol}://${host}/dashboard`;
 
     // Send magic link using better-auth
     const response = await fetch(`${protocol}://${host}/api/auth/sign-in/magic-link`, {

@@ -2,11 +2,12 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink } from "better-auth/plugins";
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import * as brevo from "@getbrevo/brevo";
 import { shouldAutoLogin } from "@/lib/auth/auth-utils";
 import { getMagicLinkEmailHtml, getMagicLinkEmailText } from "@/lib/email/templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const apiInstance = new brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY || "");
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
@@ -48,9 +49,10 @@ export const auth = betterAuth({
           return; // Don't send email
         }
 
-        // Send magic link email using Resend for first-time or returning users
+        // Send magic link email using Brevo for first-time or returning users
         try {
-          const emailFrom = process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+          const emailFrom = process.env.EMAIL_FROM || "noreply@example.com";
+          const fromName = process.env.EMAIL_FROM_NAME || "Your App";
 
           const htmlContent = getMagicLinkEmailHtml({
             email,
@@ -62,13 +64,14 @@ export const auth = betterAuth({
             magicLinkUrl: customUrl,
           });
 
-          await resend.emails.send({
-            from: emailFrom,
-            to: email,
-            subject: "Sign in to your account",
-            html: htmlContent,
-            text: textContent,
-          });
+          const sendSmtpEmail = new brevo.SendSmtpEmail();
+          sendSmtpEmail.sender = { email: emailFrom, name: fromName };
+          sendSmtpEmail.to = [{ email }];
+          sendSmtpEmail.subject = "Sign in to your account";
+          sendSmtpEmail.htmlContent = htmlContent;
+          sendSmtpEmail.textContent = textContent;
+
+          await apiInstance.sendTransacEmail(sendSmtpEmail);
 
           console.log(`Magic link sent successfully to ${email}`);
           console.log(`Magic link URL: ${customUrl}`);

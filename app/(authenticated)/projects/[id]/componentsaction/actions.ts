@@ -13,9 +13,11 @@ export type ProjectDetailWithTasks = {
   dueDate?: string;
   taskCount: number;
   completedTaskCount: number;
+  currentUserRole: string;
   members: Array<{
     id: string;
     name: string;
+    email: string;
     image?: string;
     role: string;
   }>;
@@ -26,6 +28,12 @@ export type ProjectDetailWithTasks = {
     status: string;
     priority?: string;
     dueDate?: string;
+    assignees: Array<{
+      id: string;
+      name: string;
+      email: string;
+      image?: string;
+    }>;
   }>;
 };
 
@@ -69,6 +77,18 @@ export async function getProjectDetails(projectId: string) {
             status: true,
             priority: true,
             dueDate: true,
+            assignees: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",
@@ -82,6 +102,7 @@ export async function getProjectDetails(projectId: string) {
                   select: {
                     id: true,
                     name: true,
+                    email: true,
                     image: true,
                   },
                 },
@@ -99,6 +120,12 @@ export async function getProjectDetails(projectId: string) {
       };
     }
 
+    // Find current user's role in the project
+    const currentUserMember = projectData.members.find(
+      (m) => m.workspaceMember.userId === userId
+    );
+    const currentUserRole = currentUserMember?.role || "MEMBER";
+
     // Transform data
     const project: ProjectDetailWithTasks = {
       id: projectData.id.toString(),
@@ -111,9 +138,11 @@ export async function getProjectDetails(projectId: string) {
       taskCount: projectData.tasks.length,
       completedTaskCount: projectData.tasks.filter((t) => t.status === "DONE")
         .length,
+      currentUserRole,
       members: projectData.members.map((m) => ({
         id: m.workspaceMember.user.id,
         name: m.workspaceMember.user.name,
+        email: m.workspaceMember.user.email,
         image: m.workspaceMember.user.image || undefined,
         role: m.role,
       })),
@@ -124,6 +153,12 @@ export async function getProjectDetails(projectId: string) {
         status: t.status,
         priority: t.priority || undefined,
         dueDate: t.dueDate ? dayjs(t.dueDate).format("YYYY-MM-DD") : undefined,
+        assignees: t.assignees.map((a) => ({
+          id: a.user.id,
+          name: a.user.name,
+          email: a.user.email,
+          image: a.user.image || undefined,
+        })),
       })),
     };
 
