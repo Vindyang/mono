@@ -11,6 +11,8 @@ import { useState, useEffect } from "react";
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [stats, setStats] = useState<TeamStatsData>({
     totalMembers: 0,
     activeMembers: 0,
@@ -26,14 +28,16 @@ export default function TeamPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const { members, stats, error } = await getTeamData();
-        
+        const { members, currentUserId, currentUserRole, stats, error } = await getTeamData();
+
         if (error) {
            toast.error(error);
            return;
         }
 
         if (members) setMembers(members);
+        if (currentUserId) setCurrentUserId(currentUserId);
+        if (currentUserRole) setCurrentUserRole(currentUserRole);
         if (stats) setStats(stats);
       } catch (error) {
         console.error("Failed to fetch team data", error);
@@ -56,14 +60,14 @@ export default function TeamPage() {
 
   return (
     <div className="space-y-6">
-      <TeamStats 
+      <TeamStats
         totalMembers={stats.totalMembers}
         activeMembers={stats.activeMembers}
         pendingInvites={stats.pendingInvites}
         newMembersLastMonth={stats.newMembersLastMonth}
       />
 
-      <MemberList members={members} />
+      <MemberList members={members} currentUserId={currentUserId} currentUserRole={currentUserRole} />
     </div>
   );
 }

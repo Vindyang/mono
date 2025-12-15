@@ -13,9 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import { INITIAL_PROJECTS } from "@/lib/data";
+import { Project } from "@/lib/types/project";
 
-export function TaskFilters() {
+interface TaskFiltersProps {
+  projects?: Project[];
+}
+
+export function TaskFilters({ projects = [] }: TaskFiltersProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -187,7 +191,7 @@ export function TaskFilters() {
                 >
                   All Projects
                 </DropdownMenuCheckboxItem>
-                {INITIAL_PROJECTS.map((project) => (
+                {projects.map((project) => (
                   <DropdownMenuCheckboxItem
                     key={project.id}
                     checked={currentProjectId === project.id}

@@ -30,14 +30,31 @@ dayjs.extend(isSameOrAfter);
 // const INITIAL_PROJECTS: Project[] = [ ... ];
 
 import { getDashboardData } from "./componentsaction/actions";
-import { toast } from "sonner"; // Assuming sonner is used for toasts based on package.json
+import { updateTask, deleteTask } from "../tasks/componentsaction/actions";
+import { toast } from "sonner";
+import { TaskModal } from "../tasks/components/task-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function DashboardContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -71,6 +88,7 @@ function DashboardContent() {
     const status = searchParams.get("status") || "all";
     const priority = searchParams.get("priority") || "all";
     const dueDate = searchParams.get("dueDate") || "all";
+    const projectId = searchParams.get("projectId") || "all";
 
     return tasks.filter((task) => {
       // Search filter
@@ -79,6 +97,11 @@ function DashboardContent() {
         !task.title.toLowerCase().includes(search)
       )
         return false;
+
+      // Project filter
+      if (projectId !== "all" && task.projectId !== projectId) {
+        return false;
+      }
 
       // Status filter
       if (status !== "all" && task.status !== status)
@@ -107,6 +130,60 @@ function DashboardContent() {
       return true;
     });
   }, [tasks, searchParams]);
+
+  const handleUpdateTask = async (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+    if (!editingTask) return;
+
+    const result = await updateTask(editingTask.id, {
+      title: data.title,
+      description: data.description ?? null,
+      status: data.status,
+      priority: data.priority,
+      due_date: data.due_date ?? null,
+      image: data.image ?? null,
+      projectId: data.projectId,
+    });
+
+    if (result.success && result.task) {
+      const updatedTasks = tasks.map((t) =>
+        t.id === editingTask.id ? result.task! : t
+      );
+      setTasks(updatedTasks);
+      setEditingTask(null);
+      setIsModalOpen(false);
+      toast.success("Task updated successfully");
+    } else {
+      toast.error(result.error || "Failed to update task");
+    }
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    setTaskToDelete(task);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    setIsDeleting(true);
+    const result = await deleteTask(taskToDelete.id);
+
+    if (result.success) {
+      const updatedTasks = tasks.filter((t) => t.id !== taskToDelete.id);
+      setTasks(updatedTasks);
+      toast.success("Task deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setTaskToDelete(null);
+    } else {
+      toast.error(result.error || "Failed to delete task");
+    }
+    setIsDeleting(false);
+  };
+
+  const openEditModal = (task: Task) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
 
   // Group tasks by Date -> Project
   const groupedTasks = filteredTasks.reduce((acc, task) => {
@@ -200,7 +277,7 @@ function DashboardContent() {
       </div>
 
       {/* Filters */}
-      <TaskFilters />
+      <TaskFilters projects={projects} />
 
       {/* Task List */}
       <div className="space-y-6">
@@ -283,11 +360,14 @@ function DashboardContent() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openEditModal(task)}>
                                   <Pencil className="mr-2 h-4 w-4" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDeleteTask(task)}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                                 </DropdownMenuItem>
@@ -320,6 +400,37 @@ function DashboardContent() {
           </div>
         )}
       </div>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        task={editingTask}
+        projects={projects}
+        onSubmit={handleUpdateTask}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the task &ldquo;{taskToDelete?.title}&rdquo;. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTask}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

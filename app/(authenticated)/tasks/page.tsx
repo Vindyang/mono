@@ -282,7 +282,7 @@ function TasksContent() {
       </div>
 
       {/* Filters */}
-      <TaskFilters />
+      <TaskFilters projects={projects} />
 
       {/* Kanban Board */}
       <KanbanBoard

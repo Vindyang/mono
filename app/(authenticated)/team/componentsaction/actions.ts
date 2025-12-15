@@ -105,6 +105,8 @@ export async function getTeamData() {
 
     return {
       members,
+      currentUserId: userId,
+      currentUserRole: userMembership.role.charAt(0) + userMembership.role.slice(1).toLowerCase() as any,
       stats: {
         totalMembers,
         activeMembers,

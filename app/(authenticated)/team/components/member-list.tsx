@@ -28,10 +28,12 @@ import { useState } from "react";
 
 interface MemberListProps {
   members: TeamMember[];
+  currentUserId?: string;
+  currentUserRole?: string;
   hideProjects?: boolean;
 }
 
-export function MemberList({ members, hideProjects = false }: MemberListProps) {
+export function MemberList({ members, currentUserId, currentUserRole, hideProjects = false }: MemberListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
@@ -141,6 +143,7 @@ export function MemberList({ members, hideProjects = false }: MemberListProps) {
                 
                 {/* Actions */}
                 <div className="col-span-7 flex justify-end md:col-span-1">
+                {member.id !== currentUserId && currentUserRole === "Owner" && (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
@@ -164,6 +167,7 @@ export function MemberList({ members, hideProjects = false }: MemberListProps) {
                     </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                )}
                 </div>
             </div>
             ))
