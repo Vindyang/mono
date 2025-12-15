@@ -46,3 +46,7 @@ next-env.d.ts
 .roomodes
 
 /generated/prisma
+
+# IDE
+.beast
+.cursor

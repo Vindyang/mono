@@ -13,7 +13,7 @@ export interface Invitation {
   id: string;
   email: string;
   role: "Owner" | "Admin" | "Member" | "Viewer";
-  status: "pending" | "accepted" | "expired";
+  status: "pending" | "accepted" | "expired" | "cancelled";
   invitedBy: string;
   invitedAt: string;
   projectIds?: string[]; // Optional project IDs to assign the invited member to
