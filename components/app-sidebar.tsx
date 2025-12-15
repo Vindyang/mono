@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   CheckSquare,
-  Settings,
   FolderOpen,
   Calendar,
   BarChart3,
@@ -80,11 +79,6 @@ const data: {
       title: "Team",
       url: "/team",
       icon: Users,
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
     },
   ],
 };
