@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/spinner";
 import { 
   Card, 
@@ -30,7 +29,6 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  const [isSavingWorkspace, setIsSavingWorkspace] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
@@ -61,14 +59,6 @@ export default function SettingsPage() {
     };
     fetchData();
   }, []);
-
-  const handleSaveWorkspace = async () => {
-    setIsSavingWorkspace(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setIsSavingWorkspace(false);
-    toast.success("Workspace saved (simulated)");
-  };
 
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
@@ -103,91 +93,11 @@ export default function SettingsPage() {
         </p>
       </div>
       
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
-          <TabsTrigger value="general">General</TabsTrigger>
+      <Tabs defaultValue="account" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
-
-        {/* Workspace Settings */}
-        <TabsContent value="general" className="mt-6 space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Workspace Settings</CardTitle>
-                <CardDescription>
-                  Manage your workspace name and identifier.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="workspace-name">Workspace Name</Label>
-                  <Input 
-                    id="workspace-name" 
-                    defaultValue={data?.workspace?.name || ""} 
-                    placeholder={!data?.workspace ? "No workspace found" : ""}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="workspace-id">Workspace URL</Label>
-                  <div className="flex rounded-md shadow-sm">
-                     <span className="inline-flex items-center rounded-l-md border border-r-0 border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
-                        app.todo.com/
-                     </span>
-                     <Input 
-                        id="workspace-id" 
-                        defaultValue={data?.workspace?.slug || ""} 
-                        placeholder={!data?.workspace ? "create-one" : ""}
-                        className="rounded-l-none" 
-                     />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="border-t px-6 py-4">
-                <Button onClick={handleSaveWorkspace} disabled={isSavingWorkspace || !data?.workspace}>
-                  {isSavingWorkspace ? (
-                    <>
-                      <Spinner className="h-4 w-4 mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                 <CardTitle>Appearance</CardTitle>
-                 <CardDescription>
-                    Customize how the application looks on your device.
-                 </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-6">
-                 <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="theme-mode" className="flex flex-col space-y-1">
-                       <span>Dark Mode</span>
-                       <span className="font-normal leading-snug text-muted-foreground">
-                          Switch between light and dark themes.
-                       </span>
-                    </Label>
-                    <Switch id="theme-mode" />
-                 </div>
-                 <div className="flex items-center justify-between space-x-2">
-                    <Label htmlFor="animations" className="flex flex-col space-y-1">
-                       <span>Animations</span>
-                       <span className="font-normal leading-snug text-muted-foreground">
-                          Enable subtle animations throughout the app.
-                       </span>
-                    </Label>
-                    <Switch id="animations" defaultChecked />
-                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
         {/* Account Settings */}
         <TabsContent value="account" className="mt-6 space-y-6">
