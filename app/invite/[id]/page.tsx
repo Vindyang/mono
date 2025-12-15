@@ -3,7 +3,6 @@ import { acceptInvitation } from "@/app/(authenticated)/team/componentsaction/ac
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -57,10 +56,10 @@ export default async function InvitePage({
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                 <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <CardTitle>You've Been Invited!</CardTitle>
+              <CardTitle>You&apos;ve Been Invited!</CardTitle>
               <CardDescription>
-                You've been invited to join a workspace. Click the button below
-                to accept the invitation.
+                You&apos;ve been invited to join a workspace. Click the button
+                below to accept the invitation.
               </CardDescription>
             </CardHeader>
             <CardFooter className="flex flex-col gap-3">
@@ -85,7 +84,8 @@ export default async function InvitePage({
               </div>
               <CardTitle>Invitation Accepted!</CardTitle>
               <CardDescription>
-                Welcome to the team! You've successfully joined the workspace.
+                Welcome to the team! You&apos;ve successfully joined the
+                workspace.
               </CardDescription>
             </CardHeader>
             <CardFooter>
