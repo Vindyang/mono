@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MonoLogoSimple } from "@/components/ui/mono-logo";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +22,7 @@ interface LoginFormProps extends React.ComponentProps<"div"> {
   inviteId?: string;
 }
 
-export function LoginForm({
-  className,
-  inviteId,
-  ...props
-}: LoginFormProps) {
+export function LoginForm({ className, inviteId, ...props }: LoginFormProps) {
   const [state, action, pending] = useActionState(login, undefined);
   const { data: session } = useSession();
   const router = useRouter();
@@ -50,7 +45,8 @@ export function LoginForm({
       toast.error(state.error || "No account found with this email.", {
         action: {
           label: "Sign up",
-          onClick: () => router.push(inviteId ? `/signup?inviteId=${inviteId}` : "/signup"),
+          onClick: () =>
+            router.push(inviteId ? `/signup?inviteId=${inviteId}` : "/signup"),
         },
       });
     } else if (state?.errorType === "system") {
@@ -119,7 +115,10 @@ export function LoginForm({
             </a>
             <h1 className="text-xl font-bold">Welcome to Mono</h1>
             <FieldDescription>
-              Don&apos;t have an account? <a href={inviteId ? `/signup?inviteId=${inviteId}` : "/signup"}>Sign up</a>
+              Don&apos;t have an account?{" "}
+              <a href={inviteId ? `/signup?inviteId=${inviteId}` : "/signup"}>
+                Sign up
+              </a>
             </FieldDescription>
           </div>
           {inviteId && <input type="hidden" name="inviteId" value={inviteId} />}
