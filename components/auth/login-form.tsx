@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { login } from "@/app/(public)/login/componentsaction/actions";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
@@ -61,7 +61,10 @@ export function LoginForm({
     // If auto-login, show spinner during redirect
     if (state.autoLoginUrl) {
       return (
-        <div className={cn("flex flex-col gap-6 text-center", className)} {...props}>
+        <div
+          className={cn("flex flex-col gap-6 text-center", className)}
+          {...props}
+        >
           <div className="flex flex-col items-center gap-4">
             <Spinner className="h-8 w-8" />
             <p className="text-muted-foreground">Logging you in...</p>
@@ -126,11 +129,7 @@ export function LoginForm({
           )}
           <Field>
             <Button type="submit" disabled={pending} className="relative">
-              {pending ? (
-                <Spinner className="h-4 w-4" />
-              ) : (
-                "Login"
-              )}
+              {pending ? <Spinner className="h-4 w-4" /> : "Login"}
             </Button>
           </Field>
           <FieldSeparator>Or</FieldSeparator>

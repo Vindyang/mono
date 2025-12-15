@@ -69,6 +69,7 @@ model invitation {
   role        WorkspaceMemberRole @default(MEMBER)
   status      InvitationStatus    @default(PENDING)
   invitedById String              @db.Uuid
+  projectIds  Int[]               @default([]) // Array of project IDs to assign upon acceptance
   invitedAt   DateTime            @default(now())
   expiresAt   DateTime
   acceptedAt  DateTime?

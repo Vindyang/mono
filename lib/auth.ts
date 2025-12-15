@@ -3,7 +3,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { magicLink } from "better-auth/plugins";
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
-import { shouldAutoLogin } from "@/lib/auth-utils";
+import { shouldAutoLogin } from "@/lib/auth/auth-utils";
+import { getMagicLinkEmailHtml, getMagicLinkEmailText } from "@/lib/email/templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -27,7 +28,10 @@ export const auth = betterAuth({
       disableSignUp: false, // Allow new users to sign up via magic link
       sendMagicLink: async ({ email, url }) => {
         // Replace the verify endpoint with our custom one that updates lastLoginAt
-        const customUrl = url.replace("/api/auth/magic-link/verify", "/api/auth/verify-and-update");
+        const customUrl = url.replace(
+          "/api/auth/magic-link/verify",
+          "/api/auth/verify-and-update"
+        );
 
         // Check if user logged in recently (within 30 days)
         const user = await prisma.user.findUnique({
@@ -46,17 +50,24 @@ export const auth = betterAuth({
 
         // Send magic link email using Resend for first-time or returning users
         try {
+          const emailFrom = process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
+          const htmlContent = getMagicLinkEmailHtml({
+            email,
+            magicLinkUrl: customUrl,
+          });
+
+          const textContent = getMagicLinkEmailText({
+            email,
+            magicLinkUrl: customUrl,
+          });
+
           await resend.emails.send({
-            from: "onboarding@resend.dev",
+            from: emailFrom,
             to: email,
             subject: "Sign in to your account",
-            html: `
-              <h2>Sign in to your account</h2>
-              <p>Click the link below to sign in:</p>
-              <a href="${customUrl}">Sign in</a>
-              <p>This link will expire in 5 minutes.</p>
-              <p>If you didn't request this email, you can safely ignore it.</p>
-            `,
+            html: htmlContent,
+            text: textContent,
           });
 
           console.log(`Magic link sent successfully to ${email}`);

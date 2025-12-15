@@ -16,4 +16,5 @@ export interface Invitation {
   status: "pending" | "accepted" | "expired";
   invitedBy: string;
   invitedAt: string;
+  projectIds?: string[]; // Optional project IDs to assign the invited member to
 }

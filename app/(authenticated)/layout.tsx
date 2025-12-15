@@ -8,7 +8,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useEffect, useState } from "react";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth/auth-client";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -32,7 +32,9 @@ export default function AuthenticatedLayout({
       setIsAutoLogin(true);
       // Clean up the URL by removing the autologin parameter
       params.delete("autologin");
-      const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      const newUrl = `${window.location.pathname}${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
       window.history.replaceState({}, "", newUrl);
     }
   }, []);

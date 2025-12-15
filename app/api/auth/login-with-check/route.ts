@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { shouldAutoLogin, findVerificationTokenByEmail, buildUrl } from "@/lib/auth-utils";
+import {
+  shouldAutoLogin,
+  findVerificationTokenByEmail,
+  buildUrl,
+} from "@/lib/auth/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {

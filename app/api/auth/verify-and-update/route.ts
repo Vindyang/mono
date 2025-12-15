@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { extractEmailFromVerification } from "@/lib/auth-utils";
+import { extractEmailFromVerification } from "@/lib/auth/auth-utils";
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
   const callbackURL = request.nextUrl.searchParams.get("callbackURL");
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login?error=MISSING_TOKEN", request.url));
+    return NextResponse.redirect(
+      new URL("/login?error=MISSING_TOKEN", request.url)
+    );
   }
 
   // Get the verification record to find the user email BEFORE verification
@@ -22,12 +24,14 @@ export async function GET(request: NextRequest) {
 
     if (email) {
       // Update lastLoginAt BEFORE calling verify, so it's ready when the session is created
-      await prisma.user.update({
-        where: { email },
-        data: { lastLoginAt: new Date() },
-      }).catch((error) => {
-        console.error("Failed to update lastLoginAt:", error);
-      });
+      await prisma.user
+        .update({
+          where: { email },
+          data: { lastLoginAt: new Date() },
+        })
+        .catch((error) => {
+          console.error("Failed to update lastLoginAt:", error);
+        });
     }
   }
 
@@ -55,7 +59,9 @@ export async function GET(request: NextRequest) {
 
   if (!location) {
     // If no redirect, something went wrong
-    return NextResponse.redirect(new URL("/login?error=VERIFICATION_FAILED", request.url));
+    return NextResponse.redirect(
+      new URL("/login?error=VERIFICATION_FAILED", request.url)
+    );
   }
 
   // Add a query parameter to indicate this is an auto-login to prevent race conditions

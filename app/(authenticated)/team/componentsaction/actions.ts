@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { TeamMember } from "@/lib/types/team";
 import dayjs from "dayjs";
+import { sendInvitationEmail } from "@/lib/email/send";
 
 export interface TeamStatsData {
   totalMembers: number;
@@ -192,5 +193,574 @@ export async function getInvitationsData() {
         invitations: [],
         error: "Failed to load invitations",
       };
+  }
+}
+
+/**
+ * Creates a new invitation for a user to join the workspace.
+ */
+export async function createInvitation(
+  email: string,
+  role: string,
+  projectIds: string[]
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Find user's workspace membership
+    const userMembership = await prisma.workspaceMember.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+
+    if (!userMembership) {
+      return {
+        success: false,
+        error: "You don't belong to any workspace",
+      };
+    }
+
+    // Only owners and admins can invite
+    if (userMembership.role !== "OWNER" && userMembership.role !== "ADMIN") {
+      return {
+        success: false,
+        error: "Only owners and admins can invite members",
+      };
+    }
+
+    const workspaceId = userMembership.workspaceId;
+
+    // Check if user is already a member
+    const existingMember = await prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId: workspaceId,
+        user: {
+          email: email,
+        },
+      },
+    });
+
+    if (existingMember) {
+      return {
+        success: false,
+        error: "User is already a member of this workspace",
+      };
+    }
+
+    // Check if there's already a pending invitation
+    const existingInvitation = await prisma.invitation.findFirst({
+      where: {
+        workspaceId: workspaceId,
+        email: email,
+        status: "PENDING",
+      },
+    });
+
+    if (existingInvitation) {
+      return {
+        success: false,
+        error: "An invitation has already been sent to this email",
+      };
+    }
+
+    // Convert role string to enum
+    const roleEnum = role.toUpperCase() as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+
+    // Convert project IDs to integers
+    const projectIdsInt = projectIds.map((id) => parseInt(id, 10));
+
+    // Validate project IDs belong to the workspace
+    if (projectIdsInt.length > 0) {
+      const validProjects = await prisma.project.count({
+        where: {
+          id: { in: projectIdsInt },
+          workspaceId: workspaceId,
+        },
+      });
+
+      if (validProjects !== projectIdsInt.length) {
+        return {
+          success: false,
+          error: "One or more selected projects are invalid",
+        };
+      }
+    }
+
+    // Create invitation (expires in 7 days)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const invitation = await prisma.invitation.create({
+      data: {
+        workspaceId: workspaceId,
+        email: email,
+        role: roleEnum,
+        projectIds: projectIdsInt,
+        invitedById: userId,
+        expiresAt: expiresAt,
+      },
+      include: {
+        workspace: true,
+        invitedBy: true,
+      },
+    });
+
+    // Get project names if any were assigned
+    let projectNames: string[] = [];
+    if (projectIdsInt.length > 0) {
+      const projects = await prisma.project.findMany({
+        where: {
+          id: { in: projectIdsInt },
+        },
+        select: {
+          name: true,
+        },
+      });
+      projectNames = projects.map((p) => p.name);
+    }
+
+    // Send invitation email
+    await sendInvitationEmail({
+      to: email,
+      inviterName: invitation.invitedBy.name,
+      workspaceName: invitation.workspace.name,
+      role: role,
+      invitationId: invitation.id,
+      expiresAt: invitation.expiresAt,
+      projectNames: projectNames.length > 0 ? projectNames : undefined,
+    });
+
+    return {
+      success: true,
+      invitationId: invitation.id,
+    };
+  } catch (error) {
+    console.error("Failed to create invitation:", error);
+    return {
+      success: false,
+      error: "Failed to create invitation",
+    };
+  }
+}
+
+/**
+ * Fetches projects where the current user is the owner (has OWNER or ADMIN role in workspace).
+ * Used for project selection when inviting members.
+ */
+export async function getUserOwnedProjects() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        projects: [],
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Find user's workspace membership
+    const userMembership = await prisma.workspaceMember.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+
+    if (!userMembership) {
+      return {
+        projects: [],
+      };
+    }
+
+    // Only owners and admins can assign projects to invitations
+    if (userMembership.role !== "OWNER" && userMembership.role !== "ADMIN") {
+      return {
+        projects: [],
+        error: "Insufficient permissions",
+      };
+    }
+
+    const workspaceId = userMembership.workspaceId;
+
+    // Fetch all active projects in the workspace
+    const projectsData = await prisma.project.findMany({
+      where: {
+        workspaceId: workspaceId,
+        status: "ACTIVE",
+      },
+      select: {
+        id: true,
+        name: true,
+        color: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    const projects = projectsData.map((p) => ({
+      id: p.id.toString(),
+      name: p.name,
+      color: p.color,
+    }));
+
+    return {
+      projects,
+    };
+  } catch (error) {
+    console.error("Failed to fetch user owned projects:", error);
+    return {
+      projects: [],
+      error: "Failed to load projects",
+    };
+  }
+}
+
+/**
+ * Resends an invitation email.
+ */
+export async function resendInvitation(invitationId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Find user's workspace membership
+    const userMembership = await prisma.workspaceMember.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+
+    if (!userMembership) {
+      return {
+        success: false,
+        error: "You don't belong to any workspace",
+      };
+    }
+
+    // Only owners and admins can resend
+    if (userMembership.role !== "OWNER" && userMembership.role !== "ADMIN") {
+      return {
+        success: false,
+        error: "Only owners and admins can resend invitations",
+      };
+    }
+
+    // Get invitation
+    const invitation = await prisma.invitation.findUnique({
+      where: {
+        id: parseInt(invitationId, 10),
+      },
+      include: {
+        workspace: true,
+        invitedBy: true,
+      },
+    });
+
+    if (!invitation) {
+      return {
+        success: false,
+        error: "Invitation not found",
+      };
+    }
+
+    // Verify it belongs to user's workspace
+    if (invitation.workspaceId !== userMembership.workspaceId) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    // Check if invitation is still pending
+    if (invitation.status !== "PENDING") {
+      return {
+        success: false,
+        error: "Can only resend pending invitations",
+      };
+    }
+
+    // Extend expiration by 7 days from now
+    const newExpiresAt = new Date();
+    newExpiresAt.setDate(newExpiresAt.getDate() + 7);
+
+    await prisma.invitation.update({
+      where: {
+        id: invitation.id,
+      },
+      data: {
+        expiresAt: newExpiresAt,
+      },
+    });
+
+    // Get project names if any were assigned
+    let projectNames: string[] = [];
+    if (invitation.projectIds.length > 0) {
+      const projects = await prisma.project.findMany({
+        where: {
+          id: { in: invitation.projectIds },
+        },
+        select: {
+          name: true,
+        },
+      });
+      projectNames = projects.map((p) => p.name);
+    }
+
+    // Send invitation email
+    await sendInvitationEmail({
+      to: invitation.email,
+      inviterName: invitation.invitedBy.name,
+      workspaceName: invitation.workspace.name,
+      role: invitation.role.charAt(0) + invitation.role.slice(1).toLowerCase(),
+      invitationId: invitation.id,
+      expiresAt: newExpiresAt,
+      projectNames: projectNames.length > 0 ? projectNames : undefined,
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to resend invitation:", error);
+    return {
+      success: false,
+      error: "Failed to resend invitation",
+    };
+  }
+}
+
+/**
+ * Revokes (cancels) a pending invitation.
+ */
+export async function revokeInvitation(invitationId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Find user's workspace membership
+    const userMembership = await prisma.workspaceMember.findFirst({
+      where: {
+        userId: userId,
+      },
+    });
+
+    if (!userMembership) {
+      return {
+        success: false,
+        error: "You don't belong to any workspace",
+      };
+    }
+
+    // Only owners and admins can revoke
+    if (userMembership.role !== "OWNER" && userMembership.role !== "ADMIN") {
+      return {
+        success: false,
+        error: "Only owners and admins can revoke invitations",
+      };
+    }
+
+    // Get invitation
+    const invitation = await prisma.invitation.findUnique({
+      where: {
+        id: parseInt(invitationId, 10),
+      },
+    });
+
+    if (!invitation) {
+      return {
+        success: false,
+        error: "Invitation not found",
+      };
+    }
+
+    // Verify it belongs to user's workspace
+    if (invitation.workspaceId !== userMembership.workspaceId) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    // Update status to cancelled
+    await prisma.invitation.update({
+      where: {
+        id: invitation.id,
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to revoke invitation:", error);
+    return {
+      success: false,
+      error: "Failed to revoke invitation",
+    };
+  }
+}
+
+/**
+ * Accepts an invitation and creates workspace membership.
+ */
+export async function acceptInvitation(invitationId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized - Please log in",
+      };
+    }
+
+    const userId = session.user.id;
+    const userEmail = session.user.email;
+
+    // Get invitation
+    const invitation = await prisma.invitation.findUnique({
+      where: {
+        id: parseInt(invitationId, 10),
+      },
+      include: {
+        workspace: true,
+      },
+    });
+
+    if (!invitation) {
+      return {
+        success: false,
+        error: "Invitation not found",
+      };
+    }
+
+    // Verify email matches
+    if (invitation.email !== userEmail) {
+      return {
+        success: false,
+        error: "This invitation was sent to a different email address",
+      };
+    }
+
+    // Check if invitation is still pending
+    if (invitation.status !== "PENDING") {
+      return {
+        success: false,
+        error: "This invitation is no longer valid",
+      };
+    }
+
+    // Check if invitation has expired
+    if (new Date() > invitation.expiresAt) {
+      await prisma.invitation.update({
+        where: { id: invitation.id },
+        data: { status: "EXPIRED" },
+      });
+      return {
+        success: false,
+        error: "This invitation has expired",
+      };
+    }
+
+    // Check if user is already a member
+    const existingMember = await prisma.workspaceMember.findFirst({
+      where: {
+        workspaceId: invitation.workspaceId,
+        userId: userId,
+      },
+    });
+
+    if (existingMember) {
+      return {
+        success: false,
+        error: "You are already a member of this workspace",
+      };
+    }
+
+    // Create workspace member
+    const workspaceMember = await prisma.workspaceMember.create({
+      data: {
+        workspaceId: invitation.workspaceId,
+        userId: userId,
+        role: invitation.role,
+        status: "ACTIVE",
+      },
+    });
+
+    // Assign to projects if any
+    if (invitation.projectIds.length > 0) {
+      const projectAssignments = invitation.projectIds.map((projectId) => ({
+        projectId: projectId,
+        workspaceMemberId: workspaceMember.id,
+        role: "MEMBER" as const,
+      }));
+
+      await prisma.projectMember.createMany({
+        data: projectAssignments,
+      });
+    }
+
+    // Update invitation status
+    await prisma.invitation.update({
+      where: {
+        id: invitation.id,
+      },
+      data: {
+        status: "ACCEPTED",
+        acceptedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      workspaceSlug: invitation.workspace.slug,
+    };
+  } catch (error) {
+    console.error("Failed to accept invitation:", error);
+    return {
+      success: false,
+      error: "Failed to accept invitation",
+    };
   }
 }

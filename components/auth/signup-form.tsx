@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signup } from "@/app/(public)/signup/componentsaction/actions";
-import { useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
@@ -98,7 +98,9 @@ export function SignupForm({
           <Field>
             <Button type="submit" disabled={pending} className="relative">
               {pending && <Spinner className="absolute left-4" />}
-              <span className={pending ? "opacity-50" : ""}>Create Account</span>
+              <span className={pending ? "opacity-50" : ""}>
+                Create Account
+              </span>
             </Button>
           </Field>
           <FieldSeparator>Or</FieldSeparator>
