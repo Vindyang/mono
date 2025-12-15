@@ -14,7 +14,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { getTasksData, createTask, updateTask, deleteTask } from "./componentsaction/actions";
+import { getTasksData, createTask, updateTask, deleteTask, updateTaskStatus } from "./componentsaction/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -169,11 +169,22 @@ function TasksContent() {
 
 
 
-  const handleTasksChange = (newFilteredTasks: Task[]) => {
+  const handleTasksChange = async (newFilteredTasks: Task[]) => {
+    // Detect status changes and update database
+    const statusChanges: { taskId: string; newStatus: Task["status"] }[] = [];
+
+    newFilteredTasks.forEach((newTask) => {
+      const oldTask = tasks.find((t) => t.id === newTask.id);
+      if (oldTask && oldTask.status !== newTask.status) {
+        statusChanges.push({ taskId: newTask.id, newStatus: newTask.status });
+      }
+    });
+
+    // Update local state immediately for responsive UI
     setTasks((currentTasks) => {
       const filteredIds = new Set(filteredTasks.map(t => t.id));
       const indices: number[] = [];
-      
+
       currentTasks.forEach((t, i) => {
         if (filteredIds.has(t.id)) {
           indices.push(i);
@@ -193,6 +204,21 @@ function TasksContent() {
 
       return nextTasks;
     });
+
+    // Persist status changes to database
+    if (statusChanges.length > 0) {
+      try {
+        await Promise.all(
+          statusChanges.map(({ taskId, newStatus }) =>
+            updateTaskStatus(taskId, newStatus)
+          )
+        );
+      } catch (error) {
+        console.error("Failed to update task status:", error);
+        toast.error("Failed to update task status");
+        // Optionally: revert the local state changes here
+      }
+    }
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -261,7 +287,7 @@ function TasksContent() {
       {/* Kanban Board */}
       <KanbanBoard
         tasks={filteredTasks}
-        onTasksChange={setTasks}
+        onTasksChange={handleTasksChange}
         onEdit={openEditModal}
         onDelete={handleDeleteTask}
       />

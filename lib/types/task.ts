@@ -5,7 +5,7 @@ export interface Task {
   status: "todo" | "in_progress" | "done";
   priority: "low" | "medium" | "high" | null;
   due_date: string | null;
-  image?: string | null;
+  image: string | null;
   projectId: string;
   created_at: string;
   updated_at: string;

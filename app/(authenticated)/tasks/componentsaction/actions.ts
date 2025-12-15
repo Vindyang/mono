@@ -403,6 +403,75 @@ export async function updateTask(
 }
 
 /**
+ * Updates task status (used for drag-and-drop operations)
+ */
+export async function updateTaskStatus(
+  taskId: string,
+  status: "todo" | "in_progress" | "done"
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // Verify the user has access to this task
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        id: parseInt(taskId),
+        assignees: {
+          some: {
+            userId: userId,
+          },
+        },
+      },
+    });
+
+    if (!existingTask) {
+      return {
+        success: false,
+        error: "Task not found or access denied",
+      };
+    }
+
+    // Map status to Prisma enum
+    const statusMap: Record<string, TaskStatus> = {
+      todo: TaskStatus.TODO,
+      in_progress: TaskStatus.IN_PROGRESS,
+      done: TaskStatus.DONE,
+    };
+
+    // Update only the status
+    await prisma.task.update({
+      where: {
+        id: parseInt(taskId),
+      },
+      data: {
+        status: statusMap[status],
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to update task status:", error);
+    return {
+      success: false,
+      error: "Failed to update task status",
+    };
+  }
+}
+
+/**
  * Deletes a task
  */
 export async function deleteTask(taskId: string) {
