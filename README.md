@@ -223,7 +223,7 @@ The application uses PostgreSQL with the following main entities:
 
 ## License
 
-This project is private and proprietary.
+This project is open source and available under the [MIT License](LICENSE).
 
 ## Support
 
