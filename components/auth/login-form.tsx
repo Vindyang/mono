@@ -13,7 +13,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { login } from "@/app/(public)/login/componentsaction/actions";
+import { login } from "@/app/(public)/login/componentsAction/actions";
 import { useSession } from "@/lib/auth/auth-client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
