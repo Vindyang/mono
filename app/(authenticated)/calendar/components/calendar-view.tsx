@@ -169,7 +169,7 @@ export function CalendarView({
   return (
     <CalendarContext.Provider value={{ tasks, projects, currentDate, onDayClick: handleDayClick, onTaskClick: handleTaskClick, getProjectColor }}>
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-hidden bg-background border rounded-lg shadow-sm">
+      <div className="flex-1 overflow-auto bg-background border rounded-lg shadow-sm">
         <Calendar
           mode="single"
           selected={currentDate}
@@ -184,7 +184,7 @@ export function CalendarView({
           formatters={{
             formatWeekdayName: (date) => dayjs(date).format("ddd"),
           }}
-          className="w-full h-full p-0 flex flex-col"
+          className="w-full min-w-[800px] h-full p-0 flex flex-col"
           classNames={{
             months: "flex-1 w-full flex flex-col",
             month: "flex-1 w-full flex flex-col [&_table]:!flex-1 [&_table]:!flex [&_table]:!flex-col [&_tbody]:!flex-1 [&_tbody]:!flex [&_tbody]:!flex-col [&_tr]:!flex [&_tr]:!flex-1 [&_tr]:!min-h-0",
