@@ -34,8 +34,6 @@ export default function TeamLayout({
   let currentTab = "members";
   if (pathname.includes("/invitations")) {
     currentTab = "invitations";
-  } else if (pathname.includes("/roles")) {
-    currentTab = "roles";
   }
 
   const handleTabChange = (value: string) => {
@@ -45,9 +43,6 @@ export default function TeamLayout({
         break;
       case "invitations":
         router.push("/team/invitations");
-        break;
-      case "roles":
-        router.push("/team/roles");
         break;
     }
   };
@@ -65,10 +60,9 @@ export default function TeamLayout({
       </div>
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
+        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
-          <TabsTrigger value="roles">Roles</TabsTrigger>
         </TabsList>
       </Tabs>
 
