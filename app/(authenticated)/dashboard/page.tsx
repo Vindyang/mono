@@ -216,9 +216,9 @@ function DashboardContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 w-full">
+    <div className="flex flex-col gap-6 p-4 md:p-6 w-full md:h-[calc(100dvh-7rem)] md:overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Dashboard
@@ -230,57 +230,62 @@ function DashboardContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+      <div className="grid gap-4 md:grid-cols-3 shrink-0">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex items-center justify-between md:block">
           <h3 className="text-base font-medium text-muted-foreground">
             Total Tasks
           </h3>
-          <p className="text-3xl font-bold text-foreground mt-2">
+          <p className="text-3xl font-bold text-foreground mt-0 md:mt-2">
             {tasks.length}
           </p>
         </div>
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex items-center justify-between md:block">
           <h3 className="text-base font-medium text-muted-foreground">
             In Progress
           </h3>
-          <p className="text-3xl font-bold text-foreground mt-2">
+          <p className="text-3xl font-bold text-foreground mt-0 md:mt-2">
             {tasks.filter((t) => t.status === "in_progress").length}
           </p>
         </div>
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex items-center justify-between md:block">
           <h3 className="text-base font-medium text-muted-foreground">
             Completed
           </h3>
-          <p className="text-3xl font-bold text-foreground mt-2">
+          <p className="text-3xl font-bold text-foreground mt-0 md:mt-2">
             {tasks.filter((t) => t.status === "done").length}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <TaskFilters projects={projects} />
+      <div className="shrink-0">
+        <TaskFilters projects={projects} />
+      </div>
 
       {/* Task List */}
-      <div className="space-y-6">
+      <div className="space-y-6 flex-1 md:overflow-y-auto md:min-h-0 md:pr-2">
         {Object.entries(groupedTasks).flatMap(([date, projectsGroup]) =>
           Object.entries(projectsGroup).map(([project, projectTasks]) => (
             <div
               key={`${date}-${project}`}
               className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
             >
-              <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold text-foreground">{date}</h2>
-                  {project !== "No Project" && (
-                    <>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="text-lg font-medium text-primary">
-                        {project}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground font-medium">
+              <div className="p-4 border-b border-border bg-muted/30 flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* Date - Full width on mobile */}
+                <h2 className="text-lg font-semibold text-foreground order-1 w-full md:w-auto">{date}</h2>
+                
+                {/* Project - Third on mobile (new line), Second on desktop */}
+                {project !== "No Project" && (
+                  <div className="order-2 w-full md:w-auto md:order-2 flex items-center gap-2">
+                    <span className="hidden md:inline text-muted-foreground">•</span>
+                    <span className="text-lg font-medium text-primary">
+                      {project}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Totals - Third on mobile (new line), Third on desktop (far right) */}
+                <div className="text-sm text-muted-foreground font-medium order-3 w-full md:w-auto md:ml-auto md:order-3">
                   Totals:{" "}
                   <span className="text-foreground ml-2 font-bold">
                     {projectTasks.length} Tasks
@@ -303,7 +308,8 @@ function DashboardContent() {
                         assignees: task.assignees,
                       }}
                       project={taskProject}
-                      showProject={true}
+                      showProject={false}
+                      showDueDate={false}
                       showDescription={true}
                       onEdit={() => openEditModal(task)}
                       onDelete={() => handleDeleteTask(task)}

@@ -40,6 +40,7 @@ interface TaskCardProps {
   onDelete?: () => void;
   onView?: () => void;
   clickable?: boolean;
+  showDueDate?: boolean;
 }
 
 export function TaskCard({
@@ -51,6 +52,7 @@ export function TaskCard({
   onDelete,
   onView,
   clickable = true,
+  showDueDate = true,
 }: TaskCardProps) {
   const router = useRouter();
 
@@ -77,7 +79,7 @@ export function TaskCard({
 
   return (
     <div
-      className={`p-5 hover:bg-secondary/30 transition-all group ${
+      className={`p-5 hover:bg-secondary/30 transition-all group relative ${
         clickable ? "cursor-pointer" : ""
       }`}
       onClick={handleCardClick}
@@ -101,7 +103,7 @@ export function TaskCard({
         {/* Task Content */}
         <div className="flex-1 min-w-0 space-y-2.5">
           {/* Title and ID Row */}
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3 pr-10">
             <h3
               className={`font-semibold text-base leading-tight ${
                 task.status === "done"
@@ -154,7 +156,7 @@ export function TaskCard({
             )}
 
             {/* Due Date */}
-            {task.dueDate && (
+            {showDueDate && task.dueDate && (
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 <span>{dayjs(task.dueDate).format("MMM D")}</span>
@@ -195,13 +197,13 @@ export function TaskCard({
 
         {/* Actions Menu */}
         {(onEdit || onDelete || onView) && (
-          <div className="flex-shrink-0">
+          <div className="absolute top-4 right-4 animate-in fade-in zoom-in-95 duration-200">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 hover:bg-secondary"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreHorizontal className="h-4 w-4" />
