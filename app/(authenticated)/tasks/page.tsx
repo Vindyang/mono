@@ -266,9 +266,9 @@ function TasksContent() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
+    <div className="flex flex-col h-auto xl:h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tasks</h1>
           <p className="text-sm text-muted-foreground mt-1">

@@ -27,6 +27,7 @@ import { TaskCard } from "./task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Empty, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { CheckCircle2, Circle, Timer } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -62,7 +63,7 @@ function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className="border border-border bg-card/50 transition-all duration-200 flex flex-col rounded-lg overflow-hidden h-full"
+      className="border border-border bg-card/50 transition-all duration-200 flex flex-col rounded-lg overflow-hidden h-auto xl:h-full"
     >
       {/* Column Header */}
       <div className="p-3 text-foreground bg-secondary/50 border-b border-border">
@@ -264,7 +265,29 @@ export function KanbanBoard({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-full min-h-0">
+      {/* Mobile/Tablet View (Tabs) */}
+      <div className="block xl:hidden h-full">
+        <Tabs defaultValue="todo" className="flex flex-col h-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="todo">To Do</TabsTrigger>
+            <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+            <TabsTrigger value="done">Done</TabsTrigger>
+          </TabsList>
+          {columns.map((column) => (
+            <TabsContent key={column.id} value={column.id} className="flex-1 mt-0 h-full min-h-0 data-[state=inactive]:hidden">
+              <KanbanColumn
+                column={column}
+                tasks={columnTasks[column.id]}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+
+      {/* Desktop View (Grid) */}
+      <div className="hidden xl:grid grid-cols-3 gap-8 h-full min-h-0">
         {columns.map((column) => (
           <KanbanColumn
             key={column.id}
