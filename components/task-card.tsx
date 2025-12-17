@@ -113,9 +113,7 @@ export function TaskCard({
             >
               {task.title}
             </h3>
-            <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded flex-shrink-0">
-              #{task.id}
-            </span>
+
           </div>
 
           {/* Description */}

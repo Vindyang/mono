@@ -79,7 +79,7 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
         <div className="col-span-3 hidden md:block">Role</div>
         {!hideProjects && <div className="col-span-3 hidden md:block">Projects</div>}
         <div className="col-span-2 hidden md:block">Status</div>
-        <div className="col-span-7 md:col-span-1 text-right">Actions</div>
+        {/* <div className="col-span-7 md:col-span-1 text-right">Actions</div> */ }
       </div>
       <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
         {filteredMembers.length > 0 ? (
@@ -141,8 +141,8 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
                     </div>
                 </div>
                 
-                {/* Actions */}
-                <div className="col-span-7 flex justify-end md:col-span-1">
+                {/* Actions */ }
+                {/* <div className="col-span-7 flex justify-end md:col-span-1">
                 {member.id !== currentUserId && currentUserRole === "Owner" && (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -168,7 +168,7 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
                     </DropdownMenuContent>
                 </DropdownMenu>
                 )}
-                </div>
+                </div> */}
             </div>
             ))
         ) : (

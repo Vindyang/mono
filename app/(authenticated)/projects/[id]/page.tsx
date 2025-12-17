@@ -11,7 +11,7 @@ import dayjs from "dayjs";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getProjectDetails, ProjectDetailWithTasks } from "./componentsaction/actions";
+import { getProjectDetails, ProjectDetailWithTasks, updateProjectMemberRole, removeProjectMember } from "./componentsaction/actions";
 import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
 import { createTask, updateTask, deleteTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
@@ -27,6 +27,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Pencil, Trash2, MoreHorizontal, UserCog, Check } from "lucide-react";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -170,7 +188,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const openEditModal = (task: any) => {
+    const openEditModal = (task: any) => {
     // Convert project task format to Task format
     const taskData: Task = {
       id: task.id,
@@ -180,9 +198,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       priority: task.priority ? task.priority.toLowerCase() as "low" | "medium" | "high" : null,
       due_date: task.dueDate ? dayjs(task.dueDate).format("YYYY-MM-DD") : null,
       projectId: project?.id || "",
-      created_at: task.createdAt,
+      created_at: task.createdAt, // Note: standard naming would be createdAt but Task type might expect created_at
       updated_at: task.updatedAt,
       image: task.image,
+      assignees: task.assignees,
     };
     setEditingTask(taskData);
     setIsTaskModalOpen(true);
@@ -245,17 +264,53 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
               <div className="w-px h-4 bg-border" />
             </>
           )}
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-                {project.members.map((member) => (
-                <Avatar key={member.id} className="w-6 h-6 border-2 border-background grayscale hover:grayscale-0 transition-all">
-                    <AvatarImage src={member.image} alt={member.name} />
-                    <AvatarFallback className="text-[10px]">{member.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                ))}
-            </div>
-            <span>{project.members.length} {project.members.length === 1 ? 'Member' : 'Members'}</span>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div className="flex -space-x-2">
+                        {project.members.slice(0, 5).map((member) => (
+                        <Avatar key={member.id} className="w-6 h-6 border-2 border-background grayscale hover:grayscale-0 transition-all">
+                            <AvatarImage src={member.image} alt={member.name} />
+                            <AvatarFallback className="text-[10px]">{member.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        ))}
+                        {project.members.length > 5 && (
+                             <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center border-2 border-background text-[10px] text-muted-foreground font-medium">
+                                +{project.members.length - 5}
+                            </div>
+                        )}
+                    </div>
+                    <span>{project.members.length} {project.members.length === 1 ? 'Member' : 'Members'}</span>
+                </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="start">
+                 <div className="p-4 border-b border-border">
+                    <h4 className="font-semibold leading-none">Project Members</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        {project.members.length} people in this project
+                    </p>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto p-2">
+                    {project.members.map((member) => (
+                        <div key={member.id} className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg transition-colors">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={member.image} alt={member.name} />
+                                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col overflow-hidden">
+                                <span className="font-medium text-sm truncate">{member.name}</span>
+                                <span className="text-xs text-muted-foreground truncate">{member.email}</span>
+                            </div>
+                            <div className="ml-auto flex-shrink-0">
+                                <span className="text-[10px] uppercase font-semibold bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                                    {member.role}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Progress Section */}
@@ -277,23 +332,21 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         </TabsList>
         <TabsContent value="overview" className="mt-6">
             {/* Tasks List */}
-            <div className="flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <h2 className="font-semibold text-lg">Project Tasks</h2>
-                        <span className="text-xs font-bold bg-foreground text-background px-2.5 py-0.5 rounded-full">
-                            {project.tasks.length}
-                        </span>
-                    </div>
-                    <Button
-                        onClick={() => setIsTaskModalOpen(true)}
-                        size="sm"
-                        className="h-8 gap-1.5"
-                    >
-                        <Plus className="h-4 w-4" />
-                        New Task
-                    </Button>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                    <h2 className="font-semibold text-lg">Project Tasks</h2>
                 </div>
+                <Button
+                    onClick={() => setIsTaskModalOpen(true)}
+                    size="sm"
+                    className="h-8 gap-1.5"
+                >
+                    <Plus className="h-4 w-4" />
+                    New Task
+                </Button>
+            </div>
+
+            <div className="flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
 
                 <div className="divide-y divide-border">
                     {project.tasks.length > 0 ? (
@@ -347,12 +400,73 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                           <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                             <h3 className="font-medium">{member.name}</h3>
                             <span className="text-sm text-muted-foreground">({member.email})</span>
                           </div>
                           <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
                         </div>
+                        
+                        {(project.currentUserRole === "LEAD" || project.currentUserRole === "OWNER") && member.id !== project.members.find(m => m.role === "LEAD" || m.role === "OWNER")?.id && (
+                           <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Member Actions</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger>
+                                            <UserCog className="mr-2 h-4 w-4" />
+                                            Change Role
+                                        </DropdownMenuSubTrigger>
+                                        <DropdownMenuSubContent>
+                                            <DropdownMenuItem onClick={async () => {
+                                                const result = await updateProjectMemberRole(project.id, member.id, "MEMBER");
+                                                if (result.success) {
+                                                    toast.success("Role updated to Member");
+                                                    refreshProjectData();
+                                                } else {
+                                                    toast.error(result.error);
+                                                }
+                                            }} className="justify-between">
+                                                Member
+                                                {member.role === "MEMBER" && <Check className="h-4 w-4" />}
+                                            </DropdownMenuItem>
+                                             <DropdownMenuItem onClick={async () => {
+                                                const result = await updateProjectMemberRole(project.id, member.id, "VIEWER");
+                                                if (result.success) {
+                                                    toast.success("Role updated to Viewer");
+                                                    refreshProjectData();
+                                                } else {
+                                                    toast.error(result.error);
+                                                }
+                                            }} className="justify-between">
+                                                Viewer
+                                                {member.role === "VIEWER" && <Check className="h-4 w-4" />}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={async () => {
+                                        if (confirm("Are you sure you want to remove this member?")) {
+                                            const result = await removeProjectMember(project.id, member.id);
+                                            if (result.success) {
+                                                toast.success("Member removed from project");
+                                                refreshProjectData();
+                                            } else {
+                                                toast.error(result.error);
+                                            }
+                                        }
+                                    }}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Remove from Project
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                           </DropdownMenu> 
+                        )}
                       </div>
                     ))}
                   </div>
