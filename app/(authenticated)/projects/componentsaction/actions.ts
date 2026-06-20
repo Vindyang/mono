@@ -334,13 +334,9 @@ export async function deleteProject(projectId: string) {
             };
         }
 
-        // Soft delete by archiving
-        await prisma.project.update({
+        await prisma.project.delete({
             where: {
                 id: parseInt(projectId)
-            },
-            data: {
-                status: "ARCHIVED",
             },
         });
 

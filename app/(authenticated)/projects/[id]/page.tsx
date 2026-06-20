@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProjectDetails, ProjectDetailWithTasks, updateProjectMemberRole, removeProjectMember } from "./componentsaction/actions";
+import { AddMemberDialog } from "./components/add-member-dialog";
 import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
 import { createTask, updateTask, deleteTask, updateTaskStatus } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
@@ -59,6 +60,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -405,6 +408,9 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
              <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                     <h2 className="text-lg font-semibold">Project Members</h2>
+                    {canEditTasks && (
+                      <AddMemberDialog projectId={project.id} onSuccess={refreshProjectData} />
+                    )}
                 </div>
                 <div className="flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
                   <div className="divide-y divide-border">
@@ -465,17 +471,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                                         </DropdownMenuSubContent>
                                     </DropdownMenuSub>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={async () => {
-                                        if (confirm("Are you sure you want to remove this member?")) {
-                                            const result = await removeProjectMember(project.id, member.id);
-                                            if (result.success) {
-                                                toast.success("Member removed from project");
-                                                refreshProjectData();
-                                            } else {
-                                                toast.error(result.error);
-                                            }
-                                        }
-                                    }}>
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setMemberToRemove({ id: member.id, name: member.name })}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Remove from Project
                                     </DropdownMenuItem>
@@ -506,6 +502,40 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         projectMembers={project.members}
         onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
       />
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={!!memberToRemove} onOpenChange={(open) => { if (!open) setMemberToRemove(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <span className="font-medium text-foreground">{memberToRemove?.name}</span> from the project. They will lose access to all project tasks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemovingMember}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isRemovingMember}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (!memberToRemove) return;
+                setIsRemovingMember(true);
+                const result = await removeProjectMember(project.id, memberToRemove.id);
+                setIsRemovingMember(false);
+                if (result.success) {
+                  toast.success("Member removed from project");
+                  setMemberToRemove(null);
+                  refreshProjectData();
+                } else {
+                  toast.error(result.error);
+                }
+              }}
+            >
+              {isRemovingMember ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

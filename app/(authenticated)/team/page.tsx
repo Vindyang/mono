@@ -22,31 +22,30 @@ export default function TeamPage() {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const { members, currentUserId, currentUserRole, stats, error } = await getTeamData();
+
+      if (error) {
+         toast.error(error);
+         return;
+      }
+
+      if (members) setMembers(members);
+      if (currentUserId) setCurrentUserId(currentUserId);
+      if (currentUserRole) setCurrentUserRole(currentUserRole);
+      if (stats) setStats(stats);
+    } catch (error) {
+      console.error("Failed to fetch team data", error);
+      toast.error("Failed to load team data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
-    
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const { members, currentUserId, currentUserRole, stats, error } = await getTeamData();
-
-        if (error) {
-           toast.error(error);
-           return;
-        }
-
-        if (members) setMembers(members);
-        if (currentUserId) setCurrentUserId(currentUserId);
-        if (currentUserRole) setCurrentUserRole(currentUserRole);
-        if (stats) setStats(stats);
-      } catch (error) {
-        console.error("Failed to fetch team data", error);
-        toast.error("Failed to load team data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
@@ -67,7 +66,7 @@ export default function TeamPage() {
         newMembersLastMonth={stats.newMembersLastMonth}
       />
 
-      <MemberList members={members} currentUserId={currentUserId} currentUserRole={currentUserRole} />
+      <MemberList members={members} currentUserId={currentUserId} currentUserRole={currentUserRole} onMemberRemoved={fetchData} />
     </div>
   );
 }

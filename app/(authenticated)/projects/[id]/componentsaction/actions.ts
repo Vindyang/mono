@@ -239,14 +239,14 @@ export async function removeProjectMember(projectId: string, memberId: string) {
         const session = await auth.api.getSession({
           headers: await headers(),
         });
-    
+
         if (!session?.user) {
           return {
             success: false,
             error: "Unauthorized",
           };
         }
-    
+
         const projectMember = await prisma.projectMember.findFirst({
             where: {
                 projectId: parseInt(projectId),
@@ -255,23 +255,23 @@ export async function removeProjectMember(projectId: string, memberId: string) {
                 }
             }
         });
-    
+
         if (!projectMember) {
             return {
                 success: false,
                 error: "Member not found",
             };
         }
-    
+
         await prisma.projectMember.delete({
             where: {
                 id: projectMember.id,
             },
         });
-    
+
         revalidatePath(`/projects/${projectId}`);
         return { success: true };
-    
+
       } catch (error) {
         console.error("Failed to remove project member:", error);
         return {
@@ -279,4 +279,91 @@ export async function removeProjectMember(projectId: string, memberId: string) {
           error: "Failed to remove member",
         };
       }
+}
+
+export async function searchWorkspaceMembersForProject(projectId: string, query: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { members: [], isCurrentUser: false };
+
+    const userId = session.user.id;
+    const currentUserEmail = session.user.email;
+
+    // If query matches the current user's own email, flag it
+    if (currentUserEmail && query.toLowerCase() === currentUserEmail.toLowerCase()) {
+      return { members: [], isCurrentUser: true };
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(projectId) },
+      select: { workspaceId: true },
+    });
+    if (!project) return { members: [], isCurrentUser: false };
+
+    const members = await prisma.workspaceMember.findMany({
+      where: {
+        workspaceId: project.workspaceId,
+        user: {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
+          ],
+          NOT: { id: userId },
+        },
+        NOT: {
+          projectAssignments: {
+            some: { projectId: parseInt(projectId) },
+          },
+        },
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, image: true } },
+      },
+      take: 5,
+    });
+
+    return {
+      members: members.map((m) => ({
+        workspaceMemberId: m.id.toString(),
+        id: m.user.id,
+        name: m.user.name,
+        email: m.user.email,
+        image: m.user.image ?? undefined,
+      })),
+      isCurrentUser: false,
+    };
+  } catch (error) {
+    console.error("Failed to search workspace members:", error);
+    return { members: [], isCurrentUser: false };
+  }
+}
+
+export async function addMemberToProject(projectId: string, workspaceMemberId: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: "Unauthorized" };
+
+    const userId = session.user.id;
+
+    const currentUserMember = await prisma.projectMember.findFirst({
+      where: { projectId: parseInt(projectId), workspaceMember: { userId } },
+    });
+    if (!currentUserMember || currentUserMember.role !== "LEAD") {
+      return { success: false, error: "Only project leads can add members" };
+    }
+
+    await prisma.projectMember.create({
+      data: {
+        projectId: parseInt(projectId),
+        workspaceMemberId: parseInt(workspaceMemberId),
+        role: "MEMBER",
+      },
+    });
+
+    revalidatePath(`/projects/${projectId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to add member to project:", error);
+    return { success: false, error: "Failed to add member" };
+  }
 }

@@ -143,9 +143,13 @@ export async function getTaskById(taskId: string) {
     const taskData = await prisma.task.findFirst({
       where: {
         id: parseInt(taskId),
-        assignees: {
-          some: {
-            userId: userId,
+        project: {
+          members: {
+            some: {
+              workspaceMember: {
+                userId: userId,
+              },
+            },
           },
         },
       },
@@ -390,13 +394,17 @@ export async function updateTask(
 
     const userId = session.user.id;
 
-    // Verify the user has access to this task
+    // Verify the user has access to this task via project membership
     const existingTask = await prisma.task.findFirst({
       where: {
         id: parseInt(taskId),
-        assignees: {
-          some: {
-            userId: userId,
+        project: {
+          members: {
+            some: {
+              workspaceMember: {
+                userId: userId,
+              },
+            },
           },
         },
       },
@@ -495,13 +503,17 @@ export async function updateTaskStatus(
 
     const userId = session.user.id;
 
-    // Verify the user has access to this task
+    // Verify the user has access to this task via project membership
     const existingTask = await prisma.task.findFirst({
       where: {
         id: parseInt(taskId),
-        assignees: {
-          some: {
-            userId: userId,
+        project: {
+          members: {
+            some: {
+              workspaceMember: {
+                userId: userId,
+              },
+            },
           },
         },
       },
@@ -561,13 +573,17 @@ export async function deleteTask(taskId: string) {
 
     const userId = session.user.id;
 
-    // Verify the user has access to this task
+    // Verify the user has access to this task via project membership
     const existingTask = await prisma.task.findFirst({
       where: {
         id: parseInt(taskId),
-        assignees: {
-          some: {
-            userId: userId,
+        project: {
+          members: {
+            some: {
+              workspaceMember: {
+                userId: userId,
+              },
+            },
           },
         },
       },
