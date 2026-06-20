@@ -15,7 +15,7 @@ import { getProjectDetails, ProjectDetailWithTasks, updateProjectMemberRole, rem
 import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
 import { createTask, updateTask, deleteTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
-import { Task } from "@/lib/types/task";
+import type { Task, TaskStatus, TaskPriority } from "@/lib/types/task";
 import { TaskCard } from "@/components/task-card";
 import {
   AlertDialog,
@@ -194,8 +194,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       id: task.id,
       title: task.title,
       description: task.description,
-      status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
-      priority: task.priority ? task.priority.toLowerCase() as "low" | "medium" | "high" : null,
+      status: task.status.toLowerCase() as TaskStatus,
+      priority: task.priority ? task.priority.toLowerCase() as TaskPriority : null,
       due_date: task.dueDate ? dayjs(task.dueDate).format("YYYY-MM-DD") : null,
       projectId: project?.id || "",
       created_at: task.createdAt, // Note: standard naming would be createdAt but Task type might expect created_at

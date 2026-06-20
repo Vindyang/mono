@@ -304,7 +304,7 @@ function DashboardContent() {
                         description: task.description,
                         status: task.status,
                         priority: task.priority,
-                        dueDate: task.due_date || undefined,
+                        due_date: task.due_date,
                         assignees: task.assignees,
                       }}
                       project={taskProject}

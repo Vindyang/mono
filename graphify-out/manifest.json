@@ -1,0 +1,662 @@
+{
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/.vscode/mcp.json": {
+    "mtime": 1766117012.5827813,
+    "ast_hash": "57552a7ddd0a3954780c28945ce61035",
+    "semantic_hash": "57552a7ddd0a3954780c28945ce61035"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/analytics/componentsaction/actions.ts": {
+    "mtime": 1765536336.2912502,
+    "ast_hash": "30efd526230727be7be60aaa9ae86822",
+    "semantic_hash": "30efd526230727be7be60aaa9ae86822"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/analytics/page.tsx": {
+    "mtime": 1765536354.114413,
+    "ast_hash": "22208bdf7cf0701d4b9f81c43478189a",
+    "semantic_hash": "22208bdf7cf0701d4b9f81c43478189a"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/calendar/components/calendar-view.tsx": {
+    "mtime": 1765972870.487601,
+    "ast_hash": "4df5e2deda9d4374673512acc0bf937b",
+    "semantic_hash": "4df5e2deda9d4374673512acc0bf937b"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/calendar/componentsaction/actions.ts": {
+    "mtime": 1765535779.2751808,
+    "ast_hash": "9073985338ca5345267971b41df8aa5a",
+    "semantic_hash": "9073985338ca5345267971b41df8aa5a"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/calendar/page.tsx": {
+    "mtime": 1765536019.1596856,
+    "ast_hash": "734c8df90f1677e3e575d3b644439aa8",
+    "semantic_hash": "734c8df90f1677e3e575d3b644439aa8"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/dashboard/componentsaction/actions.ts": {
+    "mtime": 1765533421.1532538,
+    "ast_hash": "2ac8caf02c42d2907fe3ac76b22b4d48",
+    "semantic_hash": "2ac8caf02c42d2907fe3ac76b22b4d48"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/dashboard/page.tsx": {
+    "mtime": 1765969428.190022,
+    "ast_hash": "b2885a0752344898e260d4c772c282d5",
+    "semantic_hash": "b2885a0752344898e260d4c772c282d5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/layout.tsx": {
+    "mtime": 1765776882.8148122,
+    "ast_hash": "3e661c6072860985cb2096cdb825d786",
+    "semantic_hash": "3e661c6072860985cb2096cdb825d786"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/[id]/componentsaction/actions.ts": {
+    "mtime": 1765975211.2909863,
+    "ast_hash": "4a7d206a8fb8428b49159c5700795e40",
+    "semantic_hash": "4a7d206a8fb8428b49159c5700795e40"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/[id]/page.tsx": {
+    "mtime": 1765975764.533733,
+    "ast_hash": "0453ba7550522ac76df50b89ca63b134",
+    "semantic_hash": "0453ba7550522ac76df50b89ca63b134"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/components/delete-project-dialog.tsx": {
+    "mtime": 1765690323.5894186,
+    "ast_hash": "975f4e6eb332885e9ecd46ba57547daf",
+    "semantic_hash": "975f4e6eb332885e9ecd46ba57547daf"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/components/edit-project-modal.tsx": {
+    "mtime": 1765729858.4692364,
+    "ast_hash": "d01238c7dd96ac1be60b22c0a97032c8",
+    "semantic_hash": "d01238c7dd96ac1be60b22c0a97032c8"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/components/new-project-modal.tsx": {
+    "mtime": 1765729818.0763116,
+    "ast_hash": "72bc41c12117790cd97a1c13ca2e57bc",
+    "semantic_hash": "72bc41c12117790cd97a1c13ca2e57bc"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/componentsaction/actions.ts": {
+    "mtime": 1765689292.3554423,
+    "ast_hash": "68133858be88ad12323b205a123423eb",
+    "semantic_hash": "68133858be88ad12323b205a123423eb"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/projects/page.tsx": {
+    "mtime": 1765973239.3166041,
+    "ast_hash": "9058568d405e7ac2e63635e3aaac1017",
+    "semantic_hash": "9058568d405e7ac2e63635e3aaac1017"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/settings/componentsaction/actions.ts": {
+    "mtime": 1765539500.9449766,
+    "ast_hash": "5c5aacb07c3e1b6c68cd7f72f4f72a95",
+    "semantic_hash": "5c5aacb07c3e1b6c68cd7f72f4f72a95"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/settings/page.tsx": {
+    "mtime": 1765774627.6342578,
+    "ast_hash": "8ea59e1df9c883eef94259663c452620",
+    "semantic_hash": "8ea59e1df9c883eef94259663c452620"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/[id]/page.tsx": {
+    "mtime": 1765815638.0998738,
+    "ast_hash": "9112816ec8de2c727e9279612882df3c",
+    "semantic_hash": "9112816ec8de2c727e9279612882df3c"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/[id]/task-details-client.tsx": {
+    "mtime": 1765815674.6511953,
+    "ast_hash": "ad9960df9657ca32240182322dee57ed",
+    "semantic_hash": "ad9960df9657ca32240182322dee57ed"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/components/kanban-board.tsx": {
+    "mtime": 1765972566.5748878,
+    "ast_hash": "92aea2bebd474e8b9d70ee2970dafbad",
+    "semantic_hash": "92aea2bebd474e8b9d70ee2970dafbad"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/components/sortable-task-card.tsx": {
+    "mtime": 1765013692.2072387,
+    "ast_hash": "b7d2392535dc963cad54ad8a5c4f5c55",
+    "semantic_hash": "b7d2392535dc963cad54ad8a5c4f5c55"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/components/task-card.tsx": {
+    "mtime": 1765772143.461631,
+    "ast_hash": "e4bdc71d79dc016f98cb4480606f3ae5",
+    "semantic_hash": "e4bdc71d79dc016f98cb4480606f3ae5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/components/task-modal.tsx": {
+    "mtime": 1765813488.2875638,
+    "ast_hash": "e77444f05956bf2de3ec5c945749d67e",
+    "semantic_hash": "e77444f05956bf2de3ec5c945749d67e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/componentsaction/actions.ts": {
+    "mtime": 1765815616.3195047,
+    "ast_hash": "38e2a340073a43680b8faa098ad372a5",
+    "semantic_hash": "38e2a340073a43680b8faa098ad372a5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/tasks/page.tsx": {
+    "mtime": 1765972561.2379124,
+    "ast_hash": "126df64b30ea25dda41eb5063a8c5696",
+    "semantic_hash": "126df64b30ea25dda41eb5063a8c5696"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/components/invitations-list.tsx": {
+    "mtime": 1765775798.4968572,
+    "ast_hash": "fc27e945bd61023cc68a2b89c85b3ac3",
+    "semantic_hash": "fc27e945bd61023cc68a2b89c85b3ac3"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/components/invite-modal.tsx": {
+    "mtime": 1765775752.0668664,
+    "ast_hash": "72decb0eca5bce9e9b4ed204daa02d2d",
+    "semantic_hash": "72decb0eca5bce9e9b4ed204daa02d2d"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/components/member-list.tsx": {
+    "mtime": 1765975179.3239255,
+    "ast_hash": "799bcf15cac712226fc6e294cd6d7f26",
+    "semantic_hash": "799bcf15cac712226fc6e294cd6d7f26"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/components/team-stats.tsx": {
+    "mtime": 1765536727.696181,
+    "ast_hash": "99a85f46d5ab49c2f9fd80ca0111b290",
+    "semantic_hash": "99a85f46d5ab49c2f9fd80ca0111b290"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/componentsaction/actions.ts": {
+    "mtime": 1765792623.6820982,
+    "ast_hash": "a26c2bf70ce49c0e0a0e6014744ee836",
+    "semantic_hash": "a26c2bf70ce49c0e0a0e6014744ee836"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/invitations/page.tsx": {
+    "mtime": 1765538316.4012315,
+    "ast_hash": "e7490b90a15c256ff05d1cd5a089792c",
+    "semantic_hash": "e7490b90a15c256ff05d1cd5a089792c"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/layout.tsx": {
+    "mtime": 1765976053.8476136,
+    "ast_hash": "35981f1c80255b5a9ed5425a891fa3ca",
+    "semantic_hash": "35981f1c80255b5a9ed5425a891fa3ca"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/page.tsx": {
+    "mtime": 1765773099.5757942,
+    "ast_hash": "e33521abc06b2c95a30d17a79e0a2099",
+    "semantic_hash": "e33521abc06b2c95a30d17a79e0a2099"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(authenticated)/team/roles/page.tsx": {
+    "mtime": 1765360607.496415,
+    "ast_hash": "4580060639c9f1b1f9c8bb516571d504",
+    "semantic_hash": "4580060639c9f1b1f9c8bb516571d504"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(public)/login/componentsAction/actions.ts": {
+    "mtime": 1765807404.1370347,
+    "ast_hash": "1ecc507c9b1fa0ea29504ce904342211",
+    "semantic_hash": "1ecc507c9b1fa0ea29504ce904342211"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(public)/login/page.tsx": {
+    "mtime": 1765797422.140515,
+    "ast_hash": "cd8922b2f6ea1341433af231e57148e9",
+    "semantic_hash": "cd8922b2f6ea1341433af231e57148e9"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(public)/signup/componentsAction/actions.ts": {
+    "mtime": 1765807545.8291304,
+    "ast_hash": "08929cca86c798bad4eb95402e25dcd1",
+    "semantic_hash": "08929cca86c798bad4eb95402e25dcd1"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/(public)/signup/page.tsx": {
+    "mtime": 1765806653.5830812,
+    "ast_hash": "405f256dc33d80197da7a26cca1abc43",
+    "semantic_hash": "405f256dc33d80197da7a26cca1abc43"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/api/auth/[...all]/route.ts": {
+    "mtime": 1765449968.329726,
+    "ast_hash": "1904de94f5362beedc269759cad175f0",
+    "semantic_hash": "1904de94f5362beedc269759cad175f0"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/api/auth/login-with-check/route.ts": {
+    "mtime": 1765776883.1074426,
+    "ast_hash": "cd52ec251faeac84ee9cc5ab9570e1d9",
+    "semantic_hash": "cd52ec251faeac84ee9cc5ab9570e1d9"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/api/auth/verify-and-update/route.ts": {
+    "mtime": 1765776883.190203,
+    "ast_hash": "60caf9155823b542dd76c8d0201ee0e8",
+    "semantic_hash": "60caf9155823b542dd76c8d0201ee0e8"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/invite/[id]/page.tsx": {
+    "mtime": 1765816086.2895298,
+    "ast_hash": "5d0a97d8876cb05c01c3ba207e31ee4e",
+    "semantic_hash": "5d0a97d8876cb05c01c3ba207e31ee4e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/layout.tsx": {
+    "mtime": 1765258913.2370853,
+    "ast_hash": "79f33c97e918cb89b5c7f6eecc32f222",
+    "semantic_hash": "79f33c97e918cb89b5c7f6eecc32f222"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/app/page.tsx": {
+    "mtime": 1765510473.8507168,
+    "ast_hash": "642573558678efbc0af247b4ec8f0690",
+    "semantic_hash": "642573558678efbc0af247b4ec8f0690"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components.json": {
+    "mtime": 1763395109.7184498,
+    "ast_hash": "e2ba02b1cfc7f5f85ec3e27da1ead567",
+    "semantic_hash": "e2ba02b1cfc7f5f85ec3e27da1ead567"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/analytics/charts/activity-trend-chart.tsx": {
+    "mtime": 1765340301.6919076,
+    "ast_hash": "4755487329487b7cdfe6ba18d744f6be",
+    "semantic_hash": "4755487329487b7cdfe6ba18d744f6be"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/analytics/charts/burndown-chart.tsx": {
+    "mtime": 1765341107.8885815,
+    "ast_hash": "d21ecbf15407f4f7c7830e76921cff99",
+    "semantic_hash": "d21ecbf15407f4f7c7830e76921cff99"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/analytics/charts/priority-distribution-chart.tsx": {
+    "mtime": 1765340312.8492687,
+    "ast_hash": "5a7d788047ab6af4403e422bfee24023",
+    "semantic_hash": "5a7d788047ab6af4403e422bfee24023"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/analytics/charts/status-distribution-chart.tsx": {
+    "mtime": 1765340321.1756604,
+    "ast_hash": "e709d68a46b471f1a587c1f8e4eca3b0",
+    "semantic_hash": "e709d68a46b471f1a587c1f8e4eca3b0"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/analytics/kpi-card.tsx": {
+    "mtime": 1765307477.614806,
+    "ast_hash": "6572cefebf319afa39a2b2ea9074b9d3",
+    "semantic_hash": "6572cefebf319afa39a2b2ea9074b9d3"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/app-sidebar.tsx": {
+    "mtime": 1765970311.516769,
+    "ast_hash": "f954615c1fe0c956aaa315a4ff7e7973",
+    "semantic_hash": "f954615c1fe0c956aaa315a4ff7e7973"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/auth/login-form.tsx": {
+    "mtime": 1765819200.6323843,
+    "ast_hash": "5517d911a76d782e307cf4b008ea79a9",
+    "semantic_hash": "5517d911a76d782e307cf4b008ea79a9"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/auth/signup-form.tsx": {
+    "mtime": 1765819202.737687,
+    "ast_hash": "8fd2b0b2d77fdb6685c6d0b64d001fa0",
+    "semantic_hash": "8fd2b0b2d77fdb6685c6d0b64d001fa0"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/auth/user-menu.tsx": {
+    "mtime": 1765776882.7235982,
+    "ast_hash": "4095a469a1d1c489bc9559e774f42c57",
+    "semantic_hash": "4095a469a1d1c489bc9559e774f42c57"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/task-card.tsx": {
+    "mtime": 1765974289.4864635,
+    "ast_hash": "4e5e015699d761b24069ae2e9184d57c",
+    "semantic_hash": "4e5e015699d761b24069ae2e9184d57c"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/task-filters.tsx": {
+    "mtime": 1765967154.4041073,
+    "ast_hash": "9583aa5e9ed19dcb1c9a845171c001a4",
+    "semantic_hash": "9583aa5e9ed19dcb1c9a845171c001a4"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/alert-dialog.tsx": {
+    "mtime": 1765689893.3397777,
+    "ast_hash": "7ffa6b9bcf801d24256c4c730f55aac1",
+    "semantic_hash": "7ffa6b9bcf801d24256c4c730f55aac1"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/avatar.tsx": {
+    "mtime": 1765342256.3137627,
+    "ast_hash": "319d523b4a33318556f2719efc561d71",
+    "semantic_hash": "319d523b4a33318556f2719efc561d71"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/badge.tsx": {
+    "mtime": 1765342259.5409207,
+    "ast_hash": "5f4aab2deb651b9b558b09dba814669c",
+    "semantic_hash": "5f4aab2deb651b9b558b09dba814669c"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/breadcrumb.tsx": {
+    "mtime": 1763396181.609069,
+    "ast_hash": "14763038175abd2410d97d8166c89480",
+    "semantic_hash": "14763038175abd2410d97d8166c89480"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/button-group.tsx": {
+    "mtime": 1765430928.9185274,
+    "ast_hash": "73a99a33fdbb8cf7742f0aad44829e25",
+    "semantic_hash": "73a99a33fdbb8cf7742f0aad44829e25"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/button.tsx": {
+    "mtime": 1765726399.464951,
+    "ast_hash": "7e1b8d2215587c9ea334242b2afa4a40",
+    "semantic_hash": "7e1b8d2215587c9ea334242b2afa4a40"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/calendar.tsx": {
+    "mtime": 1765817033.7481718,
+    "ast_hash": "9120703cf1755c72725144f777096b2a",
+    "semantic_hash": "9120703cf1755c72725144f777096b2a"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/card.tsx": {
+    "mtime": 1765307568.8952682,
+    "ast_hash": "baa8c046c2215f992931cfe2aede6c22",
+    "semantic_hash": "baa8c046c2215f992931cfe2aede6c22"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/collapsible.tsx": {
+    "mtime": 1764648389.0997348,
+    "ast_hash": "87cce2923d03d5560ae6838e54e87f60",
+    "semantic_hash": "87cce2923d03d5560ae6838e54e87f60"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/date-picker.tsx": {
+    "mtime": 1765729289.1798015,
+    "ast_hash": "3d491b215ffda926848c15dc6138ff88",
+    "semantic_hash": "3d491b215ffda926848c15dc6138ff88"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/dialog.tsx": {
+    "mtime": 1765345305.148405,
+    "ast_hash": "152ce6179a96db95550360e6611f58e3",
+    "semantic_hash": "152ce6179a96db95550360e6611f58e3"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/dropdown-menu.tsx": {
+    "mtime": 1763397795.2140133,
+    "ast_hash": "4d34f2b82c3880388c0eda72d38365dc",
+    "semantic_hash": "4d34f2b82c3880388c0eda72d38365dc"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/empty.tsx": {
+    "mtime": 1765429500.9020128,
+    "ast_hash": "73a94f13cabe23d8db6ecff918ab4ab6",
+    "semantic_hash": "73a94f13cabe23d8db6ecff918ab4ab6"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/field.tsx": {
+    "mtime": 1765434525.7004824,
+    "ast_hash": "0ea02c68f77c8b04bbb73d1db489bf7d",
+    "semantic_hash": "0ea02c68f77c8b04bbb73d1db489bf7d"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/input.tsx": {
+    "mtime": 1765428468.3523352,
+    "ast_hash": "6666f8369b53c79d39be8060dc6c4ce5",
+    "semantic_hash": "6666f8369b53c79d39be8060dc6c4ce5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/label.tsx": {
+    "mtime": 1765342260.7886896,
+    "ast_hash": "14579f07e6e3133b6ee65d3ec778b013",
+    "semantic_hash": "14579f07e6e3133b6ee65d3ec778b013"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/mono-logo.tsx": {
+    "mtime": 1765533038.4377644,
+    "ast_hash": "2f9b6c6b6ed831aaa3ef3fe2a468c291",
+    "semantic_hash": "2f9b6c6b6ed831aaa3ef3fe2a468c291"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/popover.tsx": {
+    "mtime": 1765726825.5676043,
+    "ast_hash": "d7255316c532c766cee7792d775e4d0f",
+    "semantic_hash": "d7255316c532c766cee7792d775e4d0f"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/priority-badge.tsx": {
+    "mtime": 1763572608.1072392,
+    "ast_hash": "43d4ac48d005c66625e4faf4567ba731",
+    "semantic_hash": "43d4ac48d005c66625e4faf4567ba731"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/progress.tsx": {
+    "mtime": 1765076812.8181648,
+    "ast_hash": "7a2513df6ef43154b697270ca97f1e6d",
+    "semantic_hash": "7a2513df6ef43154b697270ca97f1e6d"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/scroll-area.tsx": {
+    "mtime": 1763400588.250994,
+    "ast_hash": "e0cbc8cf157975af82fee5abdfd6954e",
+    "semantic_hash": "e0cbc8cf157975af82fee5abdfd6954e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/select.tsx": {
+    "mtime": 1765345350.9857242,
+    "ast_hash": "16db3c4bb24a7cd48c27e4269f4a7dd5",
+    "semantic_hash": "16db3c4bb24a7cd48c27e4269f4a7dd5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/separator.tsx": {
+    "mtime": 1763396181.3762023,
+    "ast_hash": "07b35dc35f811b26a1ee3982582ba9fb",
+    "semantic_hash": "07b35dc35f811b26a1ee3982582ba9fb"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/sheet.tsx": {
+    "mtime": 1763396181.4175415,
+    "ast_hash": "638d6ec8d932fb7adbcd6f58ad1d8475",
+    "semantic_hash": "638d6ec8d932fb7adbcd6f58ad1d8475"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/sidebar.tsx": {
+    "mtime": 1764648489.780771,
+    "ast_hash": "53d1796ecb06d91aaad220af0263eec0",
+    "semantic_hash": "53d1796ecb06d91aaad220af0263eec0"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/skeleton.tsx": {
+    "mtime": 1763396181.5695941,
+    "ast_hash": "ee5017bac14efeda715feaceb488382a",
+    "semantic_hash": "ee5017bac14efeda715feaceb488382a"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/sonner.tsx": {
+    "mtime": 1765102067.3254929,
+    "ast_hash": "5dde0d04f3ecf6b5e812104aca12c546",
+    "semantic_hash": "5dde0d04f3ecf6b5e812104aca12c546"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/spinner.tsx": {
+    "mtime": 1765429445.2551167,
+    "ast_hash": "e3b34dbed01ce596a06613005a438c79",
+    "semantic_hash": "e3b34dbed01ce596a06613005a438c79"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/switch.tsx": {
+    "mtime": 1765343767.0969224,
+    "ast_hash": "3fbf8e5c8705e34f592c07fb3418cc1f",
+    "semantic_hash": "3fbf8e5c8705e34f592c07fb3418cc1f"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/tabs.tsx": {
+    "mtime": 1765342770.9338121,
+    "ast_hash": "a418d65355b5e64178f04c2981bcf819",
+    "semantic_hash": "a418d65355b5e64178f04c2981bcf819"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/textarea.tsx": {
+    "mtime": 1764671294.401186,
+    "ast_hash": "3bded8e415d1e8828335baf9c04c75e8",
+    "semantic_hash": "3bded8e415d1e8828335baf9c04c75e8"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/components/ui/tooltip.tsx": {
+    "mtime": 1763396181.457825,
+    "ast_hash": "34079b3ac4d0eb8851c6cab74bd68e00",
+    "semantic_hash": "34079b3ac4d0eb8851c6cab74bd68e00"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/eslint.config.mjs": {
+    "mtime": 1763311533.4667728,
+    "ast_hash": "dfa1f5f6a7037bf39dc510f30b180002",
+    "semantic_hash": "dfa1f5f6a7037bf39dc510f30b180002"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/hooks/use-mobile.ts": {
+    "mtime": 1763396181.5336077,
+    "ast_hash": "209b5193af16624cdd89d3591480dd48",
+    "semantic_hash": "209b5193af16624cdd89d3591480dd48"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/hooks/use-tasks-statistics.ts": {
+    "mtime": 1765340338.9390388,
+    "ast_hash": "a545e0daeb6b7a6ac965dd4f7bd6e215",
+    "semantic_hash": "a545e0daeb6b7a6ac965dd4f7bd6e215"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/auth.ts": {
+    "mtime": 1765790633.4560516,
+    "ast_hash": "6663d338a47acde73867398fecb94898",
+    "semantic_hash": "6663d338a47acde73867398fecb94898"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/auth/auth-client.ts": {
+    "mtime": 1765517861.0552986,
+    "ast_hash": "2d015ce0c90790b960e76986e234999e",
+    "semantic_hash": "2d015ce0c90790b960e76986e234999e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/auth/auth-utils.ts": {
+    "mtime": 1765530215.6020794,
+    "ast_hash": "2daa49ca140a205481b8f5bf10523216",
+    "semantic_hash": "2daa49ca140a205481b8f5bf10523216"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/email/send.ts": {
+    "mtime": 1765790561.7354739,
+    "ast_hash": "d4e26f69e7e1aeb294a181531c77abf3",
+    "semantic_hash": "d4e26f69e7e1aeb294a181531c77abf3"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/email/templates.ts": {
+    "mtime": 1765776897.431615,
+    "ast_hash": "7a183a7e3768bec1eadbd04889faa724",
+    "semantic_hash": "7a183a7e3768bec1eadbd04889faa724"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/prisma.ts": {
+    "mtime": 1765452439.7184882,
+    "ast_hash": "2c5e6bc5655d3b52c9548521c105b8d5",
+    "semantic_hash": "2c5e6bc5655d3b52c9548521c105b8d5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/supabase/client.ts": {
+    "mtime": 1765381805.2427914,
+    "ast_hash": "356bc0a8570f9b7f5260e80a21c6100a",
+    "semantic_hash": "356bc0a8570f9b7f5260e80a21c6100a"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/supabase/server.ts": {
+    "mtime": 1765381859.7088199,
+    "ast_hash": "04d922a817754cbcceecff2878333cba",
+    "semantic_hash": "04d922a817754cbcceecff2878333cba"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/types/project.ts": {
+    "mtime": 1764670129.5310493,
+    "ast_hash": "8d3df8931cb62531e34ce300d24a2550",
+    "semantic_hash": "8d3df8931cb62531e34ce300d24a2550"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/types/task.ts": {
+    "mtime": 1765813134.2526438,
+    "ast_hash": "41261ad4a07bd74f781ee6ee87ec3678",
+    "semantic_hash": "41261ad4a07bd74f781ee6ee87ec3678"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/types/team.ts": {
+    "mtime": 1765817211.9874122,
+    "ast_hash": "ddc2528fa2e2567c4288b89b90fb8132",
+    "semantic_hash": "ddc2528fa2e2567c4288b89b90fb8132"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/lib/utils.ts": {
+    "mtime": 1763395111.4912858,
+    "ast_hash": "5a6fd53fdcf2be529e9cc0b718fde352",
+    "semantic_hash": "5a6fd53fdcf2be529e9cc0b718fde352"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/next.config.ts": {
+    "mtime": 1765278763.159416,
+    "ast_hash": "eac3b1da94875949e5e2fbe46f2466cb",
+    "semantic_hash": "eac3b1da94875949e5e2fbe46f2466cb"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/package.json": {
+    "mtime": 1765819769.7002382,
+    "ast_hash": "3be70927c7cb577e365eae68cde81c0b",
+    "semantic_hash": "3be70927c7cb577e365eae68cde81c0b"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/postcss.config.mjs": {
+    "mtime": 1763311533.46694,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": "239f3ebf717465dc636818a1a619398d"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma.config.ts": {
+    "mtime": 1765446078.8037186,
+    "ast_hash": "787fab9ad50835254d41453b9d7b255e",
+    "semantic_hash": "787fab9ad50835254d41453b9d7b255e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251210161844_init/migration.sql": {
+    "mtime": 1765383524.4026628,
+    "ast_hash": "803b954607cd7de33e9a8fef50dc8215",
+    "semantic_hash": "803b954607cd7de33e9a8fef50dc8215"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251210163347_updated_naming/migration.sql": {
+    "mtime": 1765384427.869353,
+    "ast_hash": "8742f2c18262bbf7ca6a61ef581f5d4f",
+    "semantic_hash": "8742f2c18262bbf7ca6a61ef581f5d4f"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211024724_add_app_models/migration.sql": {
+    "mtime": 1765421244.2763653,
+    "ast_hash": "bd4cc163a837f39c78893960e1453c30",
+    "semantic_hash": "bd4cc163a837f39c78893960e1453c30"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211072044_remove_better_auth/migration.sql": {
+    "mtime": 1765437644.363423,
+    "ast_hash": "9901c452c7351e7877069bfd5abe727c",
+    "semantic_hash": "9901c452c7351e7877069bfd5abe727c"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211081617_refactor_user_id_to_uuid/migration.sql": {
+    "mtime": 1765440977.8538933,
+    "ast_hash": "09eb023a00934f23e8346c545d7af1d5",
+    "semantic_hash": "09eb023a00934f23e8346c545d7af1d5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211082256_add_user_id_field/migration.sql": {
+    "mtime": 1765441376.4473734,
+    "ast_hash": "9b2f9f0743ddaa110e1bdee3296f9fff",
+    "semantic_hash": "9b2f9f0743ddaa110e1bdee3296f9fff"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211083313_auto_generate_user_id/migration.sql": {
+    "mtime": 1765441993.7484221,
+    "ast_hash": "3a7adec40ad052352ab35c0ed1e3722f",
+    "semantic_hash": "3a7adec40ad052352ab35c0ed1e3722f"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211084655_refactor_ids_to_int/migration.sql": {
+    "mtime": 1765442815.414716,
+    "ast_hash": "050be34601b292359cee569fafefc80a",
+    "semantic_hash": "050be34601b292359cee569fafefc80a"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211090732_user_id_int_migration/migration.sql": {
+    "mtime": 1765444052.145185,
+    "ast_hash": "d63e771eadc5f9a0fe09a0bc501030fa",
+    "semantic_hash": "d63e771eadc5f9a0fe09a0bc501030fa"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211114356_add_better_auth_fields/migration.sql": {
+    "mtime": 1765453436.991402,
+    "ast_hash": "9e7ca2371b72b7d544d7e1d818a48cc9",
+    "semantic_hash": "9e7ca2371b72b7d544d7e1d818a48cc9"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251211154532_add_uuid_defaults_to_better_auth_tables/migration.sql": {
+    "mtime": 1765467932.847142,
+    "ast_hash": "a46366e07f9a6d1b17670da1ba389ae8",
+    "semantic_hash": "a46366e07f9a6d1b17670da1ba389ae8"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251212082219_add_last_login_at_to_user/migration.sql": {
+    "mtime": 1765527739.5862818,
+    "ast_hash": "3d499b30b5d53cf9f1969a68ea04f318",
+    "semantic_hash": "3d499b30b5d53cf9f1969a68ea04f318"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/migrations/20251215050824_add_project_ids_to_invitation/migration.sql": {
+    "mtime": 1765775304.159576,
+    "ast_hash": "15122d6d8abe11c736c30716a460f939",
+    "semantic_hash": "15122d6d8abe11c736c30716a460f939"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/prisma/seed.ts": {
+    "mtime": 1765453555.080558,
+    "ast_hash": "bd193cdb184f1681d9338674f824abb1",
+    "semantic_hash": "bd193cdb184f1681d9338674f824abb1"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/tsconfig.json": {
+    "mtime": 1765015593.4401898,
+    "ast_hash": "4db91d217b7c1f852a5e0dddc8df739b",
+    "semantic_hash": "4db91d217b7c1f852a5e0dddc8df739b"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/.github/betterauth-llms.txt": {
+    "mtime": 1765368612.0903597,
+    "ast_hash": "057c935a1078cd3e48f5b4513428b888",
+    "semantic_hash": "057c935a1078cd3e48f5b4513428b888"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/.github/shadcn-llms.txt": {
+    "mtime": 1763312419.0553527,
+    "ast_hash": "94f11615cba4851034c2e0b32d78cb42",
+    "semantic_hash": "94f11615cba4851034c2e0b32d78cb42"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/README.md": {
+    "mtime": 1765817950.118844,
+    "ast_hash": "fd2b6630afbe9dd89f708087827710a5",
+    "semantic_hash": "fd2b6630afbe9dd89f708087827710a5"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/todo-app-detailed-specification.md": {
+    "mtime": 1763310680.3373175,
+    "ast_hash": "8552ea2b07d806dba3ead7ce99aad312",
+    "semantic_hash": "8552ea2b07d806dba3ead7ce99aad312"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/public/file.svg": {
+    "mtime": 1763311533.4667828,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/public/globe.svg": {
+    "mtime": 1763311533.4673722,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": "2aaafa6a49b6563925fe440891e32717"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/public/next.svg": {
+    "mtime": 1763311533.4674866,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": "8e061864f388b47f33a1c3780831193e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/public/vercel.svg": {
+    "mtime": 1763311533.4677696,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": "c0af2f507b369b085b35ef4bbe3bcf1e"
+  },
+  "/Users/vindyanggiono/Documents/coding/GitHub/mono/public/window.svg": {
+    "mtime": 1763311533.467697,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": "a2760511c65806022ad20adf74370ff3"
+  }
+}

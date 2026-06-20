@@ -11,23 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import dayjs from "dayjs";
-
-interface TaskAssignee {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-}
+import type { TaskStatus, TaskPriority } from "@/lib/types/task";
 
 interface TaskCardProps {
   task: {
     id: string;
     title: string;
     description?: string | null;
-    status: "todo" | "in_progress" | "done";
-    priority?: "low" | "medium" | "high" | null;
-    dueDate?: string;
-    assignees?: TaskAssignee[];
+    status: TaskStatus;
+    priority?: TaskPriority | null;
+    due_date?: string | null;
+    assignees?: Array<{ id: string; name: string; email: string; image?: string }>;
   };
   project?: {
     id: string;
@@ -154,10 +148,10 @@ export function TaskCard({
             )}
 
             {/* Due Date */}
-            {showDueDate && task.dueDate && (
+            {showDueDate && task.due_date && (
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <span>{dayjs(task.dueDate).format("MMM D")}</span>
+                <span>{dayjs(task.due_date).format("MMM D")}</span>
               </div>
             )}
 
