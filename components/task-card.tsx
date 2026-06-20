@@ -33,6 +33,7 @@ interface TaskCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onView?: () => void;
+  onStatusToggle?: () => void;
   clickable?: boolean;
   showDueDate?: boolean;
 }
@@ -45,6 +46,7 @@ export function TaskCard({
   onEdit,
   onDelete,
   onView,
+  onStatusToggle,
   clickable = true,
   showDueDate = true,
 }: TaskCardProps) {
@@ -83,7 +85,7 @@ export function TaskCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            // TODO: Quick status toggle
+            onStatusToggle?.();
           }}
           className="mt-0.5 flex-shrink-0"
         >

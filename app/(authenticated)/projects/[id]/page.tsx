@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getProjectDetails, ProjectDetailWithTasks, updateProjectMemberRole, removeProjectMember } from "./componentsaction/actions";
 import { TaskModal } from "@/app/(authenticated)/tasks/components/task-modal";
-import { createTask, updateTask, deleteTask } from "@/app/(authenticated)/tasks/componentsaction/actions";
+import { createTask, updateTask, deleteTask, updateTaskStatus } from "@/app/(authenticated)/tasks/componentsaction/actions";
 import { toast } from "sonner";
 import type { Task, TaskStatus, TaskPriority } from "@/lib/types/task";
 import { TaskCard } from "@/components/task-card";
@@ -58,6 +58,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -188,6 +189,19 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
   };
 
+  const handleStatusToggle = async (taskId: string, currentStatus: string) => {
+    if (togglingTaskId) return;
+    const newStatus = currentStatus === "done" ? "todo" : "done";
+    setTogglingTaskId(taskId);
+    const result = await updateTaskStatus(taskId, newStatus as "todo" | "in_progress" | "done");
+    if (result.success) {
+      await refreshProjectData();
+    } else {
+      toast.error(result.error || "Failed to update task status");
+    }
+    setTogglingTaskId(null);
+  };
+
     const openEditModal = (task: any) => {
     // Convert project task format to Task format
     const taskData: Task = {
@@ -219,7 +233,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     ? (project.completedTaskCount / project.taskCount) * 100
     : 0;
 
-  const canEditTasks = project.currentUserRole !== "MEMBER";
+  const canEditTasks = project.currentUserRole === "OWNER" || project.currentUserRole === "LEAD";
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-6rem)] gap-4 md:gap-6 p-4 md:p-6">
@@ -359,7 +373,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                                     description: task.description,
                                     status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
                                     priority: task.priority?.toLowerCase() as "low" | "medium" | "high" | undefined,
-                                    dueDate: task.dueDate,
+                                    due_date: task.dueDate,
                                     assignees: task.assignees,
                                 }}
                                 showProject={false}
@@ -367,6 +381,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                                 onView={() => router.push(`/tasks/${task.id}`)}
                                 onEdit={canEditTasks ? () => openEditModal(task) : undefined}
                                 onDelete={canEditTasks ? () => handleDeleteTask(task) : undefined}
+                                onStatusToggle={() => handleStatusToggle(task.id, task.status)}
                                 clickable={true}
                             />
                         ))
@@ -407,7 +422,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                           <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
                         </div>
                         
-                        {(project.currentUserRole === "LEAD" || project.currentUserRole === "OWNER") && member.id !== project.members.find(m => m.role === "LEAD" || m.role === "OWNER")?.id && (
+                        {(project.currentUserRole === "LEAD" || project.currentUserRole === "OWNER") && member.role !== "LEAD" && member.role !== "OWNER" && (
                            <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
