@@ -667,10 +667,11 @@ export function TaskModal({
                     >
                       {/* Thumbnail / Icon */}
                       <div className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden border border-border bg-muted flex items-center justify-center">
-                        {isImageFile(attachment.mimeType) ? (
+                        {isImageFile(attachment.mimeType) &&
+                        !attachment.id.startsWith("pending-") ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={attachment.fileUrl}
+                            src={`/api/serve/${attachment.id}`}
                             alt={attachment.fileName}
                             className="w-full h-full object-cover"
                           />

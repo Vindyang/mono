@@ -95,7 +95,7 @@ export function AttachmentGallery({
 
               {/* Thumbnail / Icon - clicking opens the file */}
               <a
-                href={attachment.fileUrl}
+                href={`/api/serve/${attachment.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full aspect-square rounded-md overflow-hidden bg-muted flex items-center justify-center"
@@ -103,7 +103,7 @@ export function AttachmentGallery({
                 {isImageMimeType(attachment.mimeType) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={attachment.fileUrl}
+                    src={`/api/serve/${attachment.id}`}
                     alt={attachment.fileName}
                     className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />

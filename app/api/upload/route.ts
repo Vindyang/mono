@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     const sanitizedName = originalFileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const uniqueFileName = `${timestamp}-${sanitizedName}`;
 
-    // 4. Upload to Supabase Storage
-    const fileUrl = await uploadFile(buffer, uniqueFileName, mimeType);
+    // 4. Upload to Supabase Storage (auto-encrypted inside uploadFile)
+    const storagePath = await uploadFile(buffer, uniqueFileName, mimeType);
 
     // 5. If taskId is provided, create attachment record in Prisma
     if (taskId) {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         data: {
           taskId: parseInt(taskId, 10),
           fileName: originalFileName,
-          fileUrl,
+          fileUrl: storagePath,
           fileSize: buffer.length,
           mimeType,
         },
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         pendingAttachment: {
-          fileUrl,
+          fileUrl: storagePath,
           fileName: originalFileName,
           fileSize: buffer.length,
           mimeType,
