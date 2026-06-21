@@ -40,6 +40,7 @@ export async function getTasksData() {
       },
       include: {
         project: true,
+        attachments: true,
         assignees: {
           select: {
             user: {
@@ -62,33 +63,44 @@ export async function getTasksData() {
     // Needed for the "New Task" modal dropdown and project filter
     const projectsData = await prisma.project.findMany({
       where: {
-         members: {
-            some: {
-                workspaceMember: {
-                    userId: userId
-                }
-            }
-         },
-         status: "ACTIVE"
+        members: {
+          some: {
+            workspaceMember: {
+              userId: userId,
+            },
+          },
+        },
+        status: "ACTIVE",
       },
       orderBy: {
-        name: "asc", 
+        name: "asc",
       },
     });
 
     // 3. Transform Data (Int -> String)
-    
+
     const tasks: Task[] = tasksData.map((t) => ({
       id: t.id.toString(),
       title: t.title,
       description: t.description,
       status: t.status.toLowerCase() as "todo" | "in_progress" | "done",
-      priority: t.priority ? (t.priority.toLowerCase() as "low" | "medium" | "high") : null,
+      priority: t.priority
+        ? (t.priority.toLowerCase() as "low" | "medium" | "high")
+        : null,
       due_date: t.dueDate ? dayjs(t.dueDate).format("YYYY-MM-DD") : null,
       projectId: t.projectId.toString(),
       created_at: dayjs(t.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(t.updatedAt).format("YYYY-MM-DD"),
       image: t.image,
+      attachments: t.attachments?.map((a) => ({
+        id: a.id.toString(),
+        taskId: a.taskId.toString(),
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        fileSize: a.fileSize,
+        mimeType: a.mimeType,
+        createdAt: dayjs(a.createdAt).toISOString(),
+      })),
       assignees: t.assignees.map((a) => ({
         id: a.user.id,
         name: a.user.name,
@@ -167,6 +179,7 @@ export async function getTaskById(taskId: string) {
             },
           },
         },
+        attachments: true,
         assignees: {
           select: {
             user: {
@@ -215,12 +228,25 @@ export async function getTaskById(taskId: string) {
       title: taskData.title,
       description: taskData.description,
       status: taskData.status.toLowerCase() as "todo" | "in_progress" | "done",
-      priority: taskData.priority ? (taskData.priority.toLowerCase() as "low" | "medium" | "high") : null,
-      due_date: taskData.dueDate ? dayjs(taskData.dueDate).format("YYYY-MM-DD") : null,
+      priority: taskData.priority
+        ? (taskData.priority.toLowerCase() as "low" | "medium" | "high")
+        : null,
+      due_date: taskData.dueDate
+        ? dayjs(taskData.dueDate).format("YYYY-MM-DD")
+        : null,
       projectId: taskData.projectId.toString(),
       created_at: dayjs(taskData.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(taskData.updatedAt).format("YYYY-MM-DD"),
       image: taskData.image,
+      attachments: taskData.attachments?.map((a) => ({
+        id: a.id.toString(),
+        taskId: a.taskId.toString(),
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        fileSize: a.fileSize,
+        mimeType: a.mimeType,
+        createdAt: dayjs(a.createdAt).toISOString(),
+      })),
       assignees: taskData.assignees.map((a) => ({
         id: a.user.id,
         name: a.user.name,
@@ -233,18 +259,20 @@ export async function getTaskById(taskId: string) {
     let currentUserRole = null;
     if (taskData.project) {
       const currentUserMember = taskData.project.members.find(
-        (m) => m.workspaceMember.userId === userId
+        (m) => m.workspaceMember.userId === userId,
       );
       currentUserRole = currentUserMember?.role || "MEMBER";
     }
 
     // Transform project data
-    const project: Project | null = taskData.project ? {
-      id: taskData.project.id.toString(),
-      name: taskData.project.name,
-      color: taskData.project.color,
-      description: taskData.project.description || undefined,
-    } : null;
+    const project: Project | null = taskData.project
+      ? {
+          id: taskData.project.id.toString(),
+          name: taskData.project.name,
+          color: taskData.project.color,
+          description: taskData.project.description || undefined,
+        }
+      : null;
 
     // Transform projects data
     const projects: Project[] = projectsData.map((p) => ({
@@ -284,6 +312,13 @@ export async function createTask(data: {
   image: string | null;
   projectId: string;
   assigneeIds?: string[];
+  attachmentIds?: string[];
+  pendingAttachments?: Array<{
+    fileUrl: string;
+    fileName: string;
+    fileSize: number | null;
+    mimeType: string | null;
+  }>;
 }) {
   try {
     const session = await auth.api.getSession({
@@ -313,9 +348,10 @@ export async function createTask(data: {
     };
 
     // Determine assignees: use provided IDs or default to creator
-    const assigneeUserIds = data.assigneeIds && data.assigneeIds.length > 0
-      ? data.assigneeIds
-      : [userId];
+    const assigneeUserIds =
+      data.assigneeIds && data.assigneeIds.length > 0
+        ? data.assigneeIds
+        : [userId];
 
     // Create the task
     const task = await prisma.task.create({
@@ -331,10 +367,34 @@ export async function createTask(data: {
         assignees: {
           create: assigneeUserIds.map((id) => ({ userId: id })),
         },
+        attachments: data.attachmentIds?.length
+          ? {
+              connect: data.attachmentIds.map((id) => ({ id: parseInt(id) })),
+            }
+          : undefined,
       },
       include: {
         project: true,
       },
+    });
+
+    // Create attachment records for pending uploads
+    if (data.pendingAttachments?.length) {
+      await prisma.attachment.createMany({
+        data: data.pendingAttachments.map((pending) => ({
+          taskId: task.id,
+          fileName: pending.fileName,
+          fileUrl: pending.fileUrl,
+          fileSize: pending.fileSize,
+          mimeType: pending.mimeType,
+        })),
+      });
+    }
+
+    // Fetch the task with attachments included
+    const taskWithAttachments = await prisma.task.findUnique({
+      where: { id: task.id },
+      include: { project: true, attachments: true },
     });
 
     // Transform to Task type
@@ -343,12 +403,23 @@ export async function createTask(data: {
       title: task.title,
       description: task.description,
       status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
-      priority: task.priority ? (task.priority.toLowerCase() as "low" | "medium" | "high") : null,
+      priority: task.priority
+        ? (task.priority.toLowerCase() as "low" | "medium" | "high")
+        : null,
       due_date: task.dueDate ? dayjs(task.dueDate).format("YYYY-MM-DD") : null,
       projectId: task.projectId.toString(),
       created_at: dayjs(task.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(task.updatedAt).format("YYYY-MM-DD"),
       image: task.image,
+      attachments: taskWithAttachments?.attachments?.map((a) => ({
+        id: a.id.toString(),
+        taskId: a.taskId.toString(),
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        fileSize: a.fileSize,
+        mimeType: a.mimeType,
+        createdAt: dayjs(a.createdAt).toISOString(),
+      })),
     };
 
     return {
@@ -378,7 +449,14 @@ export async function updateTask(
     image: string | null;
     projectId: string;
     assigneeIds?: string[];
-  }
+    attachmentIds?: string[];
+    pendingAttachments?: Array<{
+      fileUrl: string;
+      fileName: string;
+      fileSize: number | null;
+      mimeType: string | null;
+    }>;
+  },
 ) {
   try {
     const session = await auth.api.getSession({
@@ -449,11 +527,38 @@ export async function updateTask(
             create: data.assigneeIds.map((id) => ({ userId: id })),
           },
         }),
+        attachments: data.attachmentIds?.length
+          ? {
+              connect: data.attachmentIds.map((id) => ({ id: parseInt(id) })),
+            }
+          : undefined,
       },
       include: {
         project: true,
       },
     });
+
+    // Create attachment records for any pending uploads
+    if (data.pendingAttachments?.length) {
+      await prisma.attachment.createMany({
+        data: data.pendingAttachments.map((pending) => ({
+          taskId: parseInt(taskId),
+          fileName: pending.fileName,
+          fileUrl: pending.fileUrl,
+          fileSize: pending.fileSize,
+          mimeType: pending.mimeType,
+        })),
+      });
+    }
+
+    // Re-fetch with attachments included
+    const taskWithAttachments = await prisma.task.findUnique({
+      where: { id: parseInt(taskId) },
+      include: { project: true, attachments: true },
+    });
+
+    // Determine the final attachments set
+    const finalAttachments = taskWithAttachments?.attachments || [];
 
     // Transform to Task type
     const updatedTask: Task = {
@@ -461,12 +566,23 @@ export async function updateTask(
       title: task.title,
       description: task.description,
       status: task.status.toLowerCase() as "todo" | "in_progress" | "done",
-      priority: task.priority ? (task.priority.toLowerCase() as "low" | "medium" | "high") : null,
+      priority: task.priority
+        ? (task.priority.toLowerCase() as "low" | "medium" | "high")
+        : null,
       due_date: task.dueDate ? dayjs(task.dueDate).format("YYYY-MM-DD") : null,
       projectId: task.projectId.toString(),
       created_at: dayjs(task.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(task.updatedAt).format("YYYY-MM-DD"),
       image: task.image,
+      attachments: finalAttachments.map((a: any) => ({
+        id: a.id.toString(),
+        taskId: a.taskId.toString(),
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        fileSize: a.fileSize,
+        mimeType: a.mimeType,
+        createdAt: dayjs(a.createdAt).toISOString(),
+      })),
     };
 
     return {
@@ -487,7 +603,7 @@ export async function updateTask(
  */
 export async function updateTaskStatus(
   taskId: string,
-  status: "todo" | "in_progress" | "done"
+  status: "todo" | "in_progress" | "done",
 ) {
   try {
     const session = await auth.api.getSession({
@@ -612,5 +728,49 @@ export async function deleteTask(taskId: string) {
       success: false,
       error: "Failed to delete task",
     };
+  }
+}
+
+export async function getProjectMembers(projectId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return { members: [], error: "Unauthorized" };
+    }
+
+    const project = await prisma.project.findFirst({
+      where: { id: parseInt(projectId) },
+      select: {
+        members: {
+          include: {
+            workspaceMember: {
+              include: {
+                user: {
+                  select: { id: true, name: true, email: true, image: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!project) return { members: [], error: "Project not found" };
+
+    const members = project.members.map((m) => ({
+      id: m.workspaceMember.user.id,
+      name: m.workspaceMember.user.name,
+      email: m.workspaceMember.user.email,
+      image: m.workspaceMember.user.image || undefined,
+      role: m.role,
+    }));
+
+    return { members };
+  } catch (error) {
+    console.error("Failed to fetch project members:", error);
+    return { members: [], error: "Failed to load members" };
   }
 }

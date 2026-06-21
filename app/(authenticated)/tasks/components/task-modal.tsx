@@ -1,7 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { X, Image as ImageIcon, User } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  X,
+  Image as ImageIcon,
+  User,
+  Loader2,
+  Paperclip,
+  Trash2,
+  Upload,
+  File,
+  FileImage,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +35,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Task, TaskFormData } from "@/lib/types/task";
 import { Project } from "@/lib/types/project";
+import { Attachment } from "@/lib/types/attachment";
+import { getProjectMembers } from "../componentsaction/actions";
 
 interface ProjectMember {
   id: string;
@@ -34,58 +46,114 @@ interface ProjectMember {
   role: string;
 }
 
+interface TaskSubmitData extends Omit<
+  Task,
+  "id" | "created_at" | "updated_at"
+> {
+  attachmentIds?: string[];
+  pendingAttachments?: Array<{
+    fileUrl: string;
+    fileName: string;
+    fileSize: number | null;
+    mimeType: string | null;
+  }>;
+}
+
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   task?: Task | null;
   projects: Project[];
   projectMembers?: ProjectMember[];
-  onSubmit: (data: Omit<Task, "id" | "created_at" | "updated_at">) => void;
+  onSubmit: (data: TaskSubmitData) => void;
   initialDate?: string;
 }
 
-export function TaskModal({ isOpen, onClose, task, projects, projectMembers = [], onSubmit, initialDate }: TaskModalProps) {
-  const [formData, setFormData] = useState<TaskFormData>({
+function getInitialFormData(
+  task: Task | null | undefined,
+  projects: Project[],
+  initialDate?: string,
+): TaskFormData {
+  if (task) {
+    return {
+      title: task.title,
+      description: task.description || "",
+      status: task.status,
+      priority: task.priority || "medium",
+      dueDate: task.due_date ? new Date(task.due_date) : undefined,
+      image: task.image || null,
+      projectId: task.projectId,
+      assigneeIds: task.assignees ? task.assignees.map((a) => a.id) : [],
+      attachments: task.attachments || [],
+    };
+  }
+  return {
     title: "",
     description: "",
     status: "todo",
     priority: "medium",
-    dueDate: undefined,
+    dueDate: initialDate ? new Date(initialDate) : undefined,
     image: null,
-    projectId: "",
+    projectId: projects.length > 0 ? projects[0].id : "",
     assigneeIds: [],
-  });
+    attachments: [],
+  };
+}
+
+export function TaskModal({
+  isOpen,
+  onClose,
+  task,
+  projects,
+  projectMembers: externalMembers,
+  onSubmit,
+  initialDate,
+}: TaskModalProps) {
+  const [formData, setFormData] = useState<TaskFormData>(() =>
+    getInitialFormData(task, projects, initialDate),
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [internalMembers, setInternalMembers] = useState<ProjectMember[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Use externally provided members if available, otherwise fetch internally
+  const projectMembers = externalMembers?.length
+    ? externalMembers
+    : internalMembers;
+
+  // Fetch project members when selected project changes
+  useEffect(() => {
+    if (!formData.projectId || externalMembers?.length) {
+      setInternalMembers([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingMembers(true);
+
+    getProjectMembers(formData.projectId).then(({ members }) => {
+      if (!cancelled) {
+        setInternalMembers(members);
+        setIsLoadingMembers(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.projectId, externalMembers]);
 
   useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title,
-        description: task.description || "",
-        status: task.status,
-        priority: task.priority || "medium",
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        image: task.image || null,
-        projectId: task.projectId,
-        assigneeIds: task.assignees ? task.assignees.map(a => a.id) : [],
-      });
-    } else {
-      setFormData({
-        title: "",
-        description: "",
-        status: "todo",
-        priority: "medium",
-        dueDate: initialDate ? new Date(initialDate) : undefined,
-        image: null,
-        projectId: projects.length > 0 ? projects[0].id : "",
-        assigneeIds: [],
-      });
+    if (isOpen) {
+      setFormData(getInitialFormData(task, projects, initialDate));
+      setErrors({});
     }
-    setErrors({});
-  }, [task, isOpen, projects, initialDate]);
+  }, [isOpen, task, projects, initialDate]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -104,16 +172,16 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
       newErrors.description = "Description must be less than 1000 characters";
     }
 
-
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // Legacy image handlers (backward compat)
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         setErrors({ ...errors, image: "Image size must be less than 5MB" });
         return;
       }
@@ -134,6 +202,131 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
     }
   };
 
+  // Attachment upload handler
+  const handleAttachmentUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (10MB limit for attachments)
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors({
+        ...errors,
+        attachments: "File size must be less than 10MB",
+      });
+      return;
+    }
+
+    setUploadingAttachments(true);
+    setErrors({ ...errors, attachments: "" });
+
+    try {
+      const formPayload = new FormData();
+      formPayload.append("file", file);
+      // Send taskId when editing so the DB record is created immediately
+      if (task?.id) {
+        formPayload.append("taskId", task.id);
+      }
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formPayload,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || "Upload failed");
+      }
+
+      const data = await response.json();
+
+      if (data.attachment) {
+        // Editing: DB record was created, use the returned attachment
+        const attachment: Attachment = data.attachment;
+        setFormData((prev) => ({
+          ...prev,
+          attachments: [...(prev.attachments || []), attachment],
+        }));
+      } else if (data.pendingAttachment) {
+        // Creating: no taskId yet, store as pending with a temp ID
+        const pending: Attachment = {
+          id: `pending-${Date.now()}`,
+          taskId: "",
+          fileName: data.pendingAttachment.fileName,
+          fileUrl: data.pendingAttachment.fileUrl,
+          fileSize: data.pendingAttachment.fileSize,
+          mimeType: data.pendingAttachment.mimeType,
+          createdAt: new Date().toISOString(),
+        };
+        setFormData((prev) => ({
+          ...prev,
+          attachments: [...(prev.attachments || []), pending],
+        }));
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      setErrors({
+        ...errors,
+        attachments:
+          error instanceof Error ? error.message : "Failed to upload file",
+      });
+    } finally {
+      setUploadingAttachments(false);
+      // Reset the file input so the same file can be re-selected
+      if (attachmentFileInputRef.current) {
+        attachmentFileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Attachment remove handler
+  const handleRemoveAttachment = async (attachment: Attachment) => {
+    // If this is a pending attachment (no DB record), just remove from local state
+    if (attachment.id.startsWith("pending-")) {
+      setFormData((prev) => ({
+        ...prev,
+        attachments: (prev.attachments || []).filter(
+          (a) => a.id !== attachment.id,
+        ),
+      }));
+      return;
+    }
+
+    // Optimistically remove from local state for persisted attachments
+    setFormData((prev) => ({
+      ...prev,
+      attachments: (prev.attachments || []).filter(
+        (a) => a.id !== attachment.id,
+      ),
+    }));
+
+    try {
+      const response = await fetch(`/api/upload/${attachment.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || "Failed to delete attachment");
+      }
+    } catch (error) {
+      console.error("Delete attachment error:", error);
+      // Re-add the attachment on failure
+      setFormData((prev) => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), attachment],
+      }));
+      setErrors({
+        ...errors,
+        attachments:
+          error instanceof Error
+            ? error.message
+            : "Failed to remove attachment",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -144,6 +337,14 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
     setIsSubmitting(true);
 
     try {
+      const attachments = formData.attachments || [];
+      const persistentAttachmentIds = attachments
+        .filter((a) => !a.id.startsWith("pending-"))
+        .map((a) => a.id);
+      const pendingAttachments = attachments.filter((a) =>
+        a.id.startsWith("pending-"),
+      );
+
       const taskData = {
         title: formData.title.trim(),
         description: formData.description?.trim() || null,
@@ -153,6 +354,13 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
         image: formData.image || null,
         projectId: formData.projectId,
         assigneeIds: formData.assigneeIds,
+        attachmentIds: persistentAttachmentIds,
+        pendingAttachments: pendingAttachments.map((a) => ({
+          fileUrl: a.fileUrl,
+          fileName: a.fileName,
+          fileSize: a.fileSize,
+          mimeType: a.mimeType,
+        })),
       };
 
       await onSubmit(taskData);
@@ -165,17 +373,33 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
 
   const handleOpenChange = (open: boolean) => {
     if (!open && !isSubmitting) {
+      setErrors({});
       onClose();
     }
   };
 
+  // Format file size for display
+  const formatFileSize = (bytes: number | null): string => {
+    if (bytes === null || bytes === undefined) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Check if a file is an image by mime type
+  const isImageFile = (mimeType: string | null): boolean => {
+    if (!mimeType) return false;
+    return mimeType.startsWith("image/");
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        key={task?.id ?? "create-task"}
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
         <DialogHeader>
-          <DialogTitle>
-            {task ? "Edit Task" : "Create Task"}
-          </DialogTitle>
+          <DialogTitle>{task ? "Edit Task" : "Create Task"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -213,7 +437,9 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
               }
               disabled={isSubmitting}
             >
-              <SelectTrigger className={errors.projectId ? "border-destructive" : ""}>
+              <SelectTrigger
+                className={errors.projectId ? "border-destructive" : ""}
+              >
                 <SelectValue placeholder="Select a project" />
               </SelectTrigger>
               <SelectContent>
@@ -231,7 +457,9 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
               </SelectContent>
             </Select>
             {errors.projectId && (
-              <p className="text-destructive text-xs mt-1">{errors.projectId}</p>
+              <p className="text-destructive text-xs mt-1">
+                {errors.projectId}
+              </p>
             )}
           </div>
 
@@ -245,7 +473,9 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
                 <div className="flex flex-wrap gap-2 min-h-[42px] border border-input rounded-md p-2">
                   {formData.assigneeIds && formData.assigneeIds.length > 0 ? (
                     formData.assigneeIds.map((assigneeId) => {
-                      const member = projectMembers.find(m => m.id === assigneeId);
+                      const member = projectMembers.find(
+                        (m) => m.id === assigneeId,
+                      );
                       if (!member) return null;
                       return (
                         <Badge
@@ -255,7 +485,9 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
                         >
                           <Avatar className="w-4 h-4">
                             <AvatarImage src={member.image} alt={member.name} />
-                            <AvatarFallback className="text-[8px]">{member.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="text-[8px]">
+                              {member.name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <span className="text-xs">{member.name}</span>
                           <button
@@ -263,7 +495,10 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
                             onClick={() => {
                               setFormData({
                                 ...formData,
-                                assigneeIds: formData.assigneeIds?.filter(id => id !== assigneeId) || []
+                                assigneeIds:
+                                  formData.assigneeIds?.filter(
+                                    (id) => id !== assigneeId,
+                                  ) || [],
                               });
                             }}
                             className="ml-1 hover:text-destructive"
@@ -283,7 +518,9 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
                 </div>
                 <div className="flex flex-col gap-1 max-h-40 overflow-y-auto border border-border rounded-md p-2">
                   {projectMembers.map((member) => {
-                    const isSelected = formData.assigneeIds?.includes(member.id);
+                    const isSelected = formData.assigneeIds?.includes(
+                      member.id,
+                    );
                     return (
                       <button
                         key={member.id}
@@ -292,32 +529,54 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
                           if (isSelected) {
                             setFormData({
                               ...formData,
-                              assigneeIds: formData.assigneeIds?.filter(id => id !== member.id) || []
+                              assigneeIds:
+                                formData.assigneeIds?.filter(
+                                  (id) => id !== member.id,
+                                ) || [],
                             });
                           } else {
                             setFormData({
                               ...formData,
-                              assigneeIds: [...(formData.assigneeIds || []), member.id]
+                              assigneeIds: [
+                                ...(formData.assigneeIds || []),
+                                member.id,
+                              ],
                             });
                           }
                         }}
                         className={`flex items-center gap-3 p-2 rounded-md hover:bg-secondary transition-colors text-left ${
-                          isSelected ? 'bg-secondary' : ''
+                          isSelected ? "bg-secondary" : ""
                         }`}
                         disabled={isSubmitting}
                       >
                         <Avatar className="w-6 h-6">
                           <AvatarImage src={member.image} alt={member.name} />
-                          <AvatarFallback className="text-[10px]">{member.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="text-[10px]">
+                            {member.name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{member.name}</div>
-                          <div className="text-xs text-muted-foreground truncate">{member.email}</div>
+                          <div className="text-sm font-medium truncate">
+                            {member.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {member.email}
+                          </div>
                         </div>
                         {isSelected && (
                           <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                            <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-3 h-3 text-primary-foreground"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           </div>
                         )}
@@ -347,60 +606,142 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
               disabled={isSubmitting}
             />
             {errors.description && (
-              <p className="text-destructive text-xs mt-1">{errors.description}</p>
+              <p className="text-destructive text-xs mt-1">
+                {errors.description}
+              </p>
             )}
           </div>
 
-          {/* Image Upload */}
+          {/* Legacy Image Upload (backward compat) */}
+          {formData.image ? (
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-2 tracking-wide">
+                IMAGE
+              </label>
+              <div className="relative rounded-md overflow-hidden border border-border group h-48 w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={formData.image}
+                  alt="Task attachment"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={removeImage}
+                    className="h-8"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Remove Image
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Legacy image hidden input (keep for backward compat) */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleImageChange}
+            disabled={isSubmitting}
+          />
+
+          {/* Attachments Section */}
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-2 tracking-wide">
-              IMAGE
+              ATTACHMENTS
             </label>
             <div className="space-y-3">
-              {formData.image ? (
-                <div className="relative rounded-md overflow-hidden border border-border group h-48 w-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={formData.image}
-                    alt="Task attachment"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={removeImage}
-                      className="h-8"
+              {/* Existing attachments list */}
+              {formData.attachments && formData.attachments.length > 0 && (
+                <div className="border border-border rounded-md divide-y divide-border">
+                  {formData.attachments.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center gap-3 px-3 py-2.5 group hover:bg-secondary/50 transition-colors"
                     >
-                      <X className="h-4 w-4 mr-2" />
-                      Remove Image
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-secondary/50 transition-colors"
-                >
-                  <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-xs text-muted-foreground text-center">
-                    Click to upload image
-                    <br />
-                    <span className="text-[10px] opacity-70">Max 5MB</span>
-                  </p>
+                      {/* Thumbnail / Icon */}
+                      <div className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden border border-border bg-muted flex items-center justify-center">
+                        {isImageFile(attachment.mimeType) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={attachment.fileUrl}
+                            alt={attachment.fileName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <File className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+
+                      {/* File info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {attachment.fileName}
+                        </p>
+                        {attachment.fileSize !== null && (
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(attachment.fileSize)}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Remove button */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                        onClick={() => handleRemoveAttachment(attachment)}
+                        disabled={isSubmitting}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageChange}
-                disabled={isSubmitting}
-              />
-              {errors.image && (
-                <p className="text-destructive text-xs mt-1">{errors.image}</p>
+
+              {/* Add Attachment Button */}
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => attachmentFileInputRef.current?.click()}
+                  disabled={isSubmitting || uploadingAttachments}
+                  className="h-9"
+                >
+                  {uploadingAttachments ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Add Attachment
+                    </>
+                  )}
+                </Button>
+                <input
+                  type="file"
+                  ref={attachmentFileInputRef}
+                  className="hidden"
+                  onChange={handleAttachmentUpload}
+                  disabled={isSubmitting || uploadingAttachments}
+                />
+              </div>
+
+              {errors.attachments && (
+                <p className="text-destructive text-xs mt-1">
+                  {errors.attachments}
+                </p>
               )}
             </div>
           </div>
@@ -469,9 +810,7 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
               }
               placeholder="Select due date"
               disabled={isSubmitting}
-              className={`${
-                errors.dueDate ? "border-destructive" : ""
-              }`}
+              className={`${errors.dueDate ? "border-destructive" : ""}`}
             />
             {errors.dueDate && (
               <p className="text-destructive text-xs mt-1">{errors.dueDate}</p>
@@ -480,11 +819,7 @@ export function TaskModal({ isOpen, onClose, task, projects, projectMembers = []
         </form>
 
         <DialogFooter>
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
+          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Spinner className="h-4 w-4 mr-2" />

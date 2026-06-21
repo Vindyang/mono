@@ -14,7 +14,13 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { getTasksData, createTask, updateTask, deleteTask, updateTaskStatus } from "./componentsaction/actions";
+import {
+  getTasksData,
+  createTask,
+  updateTask,
+  deleteTask,
+  updateTaskStatus,
+} from "./componentsaction/actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,15 +50,15 @@ function TasksContent() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const { tasks, projects, error } = await getTasksData();
-        
+
         if (error) {
-           toast.error(error);
-           return;
+          toast.error(error);
+          return;
         }
 
         if (tasks) setTasks(tasks);
@@ -113,7 +119,8 @@ function TasksContent() {
           if (!taskDate.isSame(today, "week")) return false;
         } else if (dueDate === "overdue") {
           // Overdue means strictly before today and not done
-          if (!taskDate.isBefore(today, "day") || task.status === "done") return false;
+          if (!taskDate.isBefore(today, "day") || task.status === "done")
+            return false;
         }
       }
 
@@ -121,7 +128,17 @@ function TasksContent() {
     });
   }, [tasks, searchParams]);
 
-  const handleCreateTask = async (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleCreateTask = async (
+    data: Omit<Task, "id" | "created_at" | "updated_at"> & {
+      attachmentIds?: string[];
+      pendingAttachments?: Array<{
+        fileUrl: string;
+        fileName: string;
+        fileSize: number | null;
+        mimeType: string | null;
+      }>;
+    },
+  ) => {
     const result = await createTask({
       title: data.title,
       description: data.description ?? null,
@@ -130,6 +147,8 @@ function TasksContent() {
       due_date: data.due_date ?? null,
       image: data.image ?? null,
       projectId: data.projectId,
+      attachmentIds: data.attachmentIds,
+      pendingAttachments: data.pendingAttachments,
     });
 
     if (result.success && result.task) {
@@ -141,7 +160,17 @@ function TasksContent() {
     }
   };
 
-  const handleUpdateTask = async (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleUpdateTask = async (
+    data: Omit<Task, "id" | "created_at" | "updated_at"> & {
+      attachmentIds?: string[];
+      pendingAttachments?: Array<{
+        fileUrl: string;
+        fileName: string;
+        fileSize: number | null;
+        mimeType: string | null;
+      }>;
+    },
+  ) => {
     if (!editingTask) return;
 
     const result = await updateTask(editingTask.id, {
@@ -152,11 +181,13 @@ function TasksContent() {
       due_date: data.due_date ?? null,
       image: data.image ?? null,
       projectId: data.projectId,
+      attachmentIds: data.attachmentIds,
+      pendingAttachments: data.pendingAttachments,
     });
 
     if (result.success && result.task) {
       const updatedTasks = tasks.map((t) =>
-        t.id === editingTask.id ? result.task! : t
+        t.id === editingTask.id ? result.task! : t,
       );
       setTasks(updatedTasks);
       setEditingTask(null);
@@ -166,8 +197,6 @@ function TasksContent() {
       toast.error(result.error || "Failed to update task");
     }
   };
-
-
 
   const handleTasksChange = async (newFilteredTasks: Task[]) => {
     // Detect status changes and update database
@@ -182,7 +211,7 @@ function TasksContent() {
 
     // Update local state immediately for responsive UI
     setTasks((currentTasks) => {
-      const filteredIds = new Set(filteredTasks.map(t => t.id));
+      const filteredIds = new Set(filteredTasks.map((t) => t.id));
       const indices: number[] = [];
 
       currentTasks.forEach((t, i) => {
@@ -192,9 +221,9 @@ function TasksContent() {
       });
 
       if (indices.length !== newFilteredTasks.length) {
-         // Fallback to updating by properties if index alignment fails
-         const newTasksMap = new Map(newFilteredTasks.map(t => [t.id, t]));
-         return currentTasks.map(t => newTasksMap.get(t.id) || t);
+        // Fallback to updating by properties if index alignment fails
+        const newTasksMap = new Map(newFilteredTasks.map((t) => [t.id, t]));
+        return currentTasks.map((t) => newTasksMap.get(t.id) || t);
       }
 
       const nextTasks = [...currentTasks];
@@ -210,8 +239,8 @@ function TasksContent() {
       try {
         await Promise.all(
           statusChanges.map(({ taskId, newStatus }) =>
-            updateTaskStatus(taskId, newStatus)
-          )
+            updateTaskStatus(taskId, newStatus),
+          ),
         );
       } catch (error) {
         console.error("Failed to update task status:", error);
@@ -270,7 +299,9 @@ function TasksContent() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tasks</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Tasks
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Manage and track your tasks efficiently
           </p>
@@ -294,6 +325,7 @@ function TasksContent() {
 
       {/* Task Modal */}
       <TaskModal
+        key={editingTask ? `edit-${editingTask.id}` : "create-task"}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         task={editingTask}
@@ -302,12 +334,16 @@ function TasksContent() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the task "{taskToDelete?.title}". This action cannot be undone.
+              This will permanently delete the task "{taskToDelete?.title}".
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -328,11 +364,13 @@ function TasksContent() {
 
 export default function TasksPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner className="h-8 w-8" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Spinner className="h-8 w-8" />
+        </div>
+      }
+    >
       <TasksContent />
     </Suspense>
   );

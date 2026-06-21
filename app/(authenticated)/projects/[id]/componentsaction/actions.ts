@@ -29,6 +29,16 @@ export type ProjectDetailWithTasks = {
     status: string;
     priority?: string;
     dueDate?: string;
+    image?: string | null;
+    attachments?: Array<{
+      id: string;
+      taskId: string;
+      fileName: string;
+      fileUrl: string;
+      fileSize: number | null;
+      mimeType: string | null;
+      createdAt: string;
+    }>;
     assignees: Array<{
       id: string;
       name: string;
@@ -78,6 +88,8 @@ export async function getProjectDetails(projectId: string) {
             status: true,
             priority: true,
             dueDate: true,
+            image: true,
+            attachments: true,
             assignees: {
               select: {
                 user: {
@@ -123,7 +135,7 @@ export async function getProjectDetails(projectId: string) {
 
     // Find current user's role in the project
     const currentUserMember = projectData.members.find(
-      (m) => m.workspaceMember.userId === userId
+      (m) => m.workspaceMember.userId === userId,
     );
     const currentUserRole = currentUserMember?.role || "MEMBER";
 
@@ -154,6 +166,16 @@ export async function getProjectDetails(projectId: string) {
         status: t.status,
         priority: t.priority || undefined,
         dueDate: t.dueDate ? dayjs(t.dueDate).format("YYYY-MM-DD") : undefined,
+        image: t.image,
+        attachments: t.attachments?.map((a) => ({
+          id: a.id.toString(),
+          taskId: a.taskId.toString(),
+          fileName: a.fileName,
+          fileUrl: a.fileUrl,
+          fileSize: a.fileSize,
+          mimeType: a.mimeType,
+          createdAt: dayjs(a.createdAt).toISOString(),
+        })),
         assignees: t.assignees.map((a) => ({
           id: a.user.id,
           name: a.user.name,
@@ -178,7 +200,7 @@ export async function getProjectDetails(projectId: string) {
 export async function updateProjectMemberRole(
   projectId: string,
   memberId: string,
-  newRole: "LEAD" | "MEMBER" | "VIEWER"
+  newRole: "LEAD" | "MEMBER" | "VIEWER",
 ) {
   try {
     const session = await auth.api.getSession({
@@ -196,35 +218,34 @@ export async function updateProjectMemberRole(
     // For now we assume the UI handles visibility, and we trust the request mostly
     // but we SHOULD check permissions.
     // Let's at least check if the user is a member of the project.
-    
+
     const projectMember = await prisma.projectMember.findFirst({
-        where: {
-            projectId: parseInt(projectId),
-            workspaceMember: {
-                userId: memberId
-            }
-        }
+      where: {
+        projectId: parseInt(projectId),
+        workspaceMember: {
+          userId: memberId,
+        },
+      },
     });
 
     if (!projectMember) {
-        return {
-            success: false,
-            error: "Member not found",
-        };
+      return {
+        success: false,
+        error: "Member not found",
+      };
     }
 
     await prisma.projectMember.update({
-        where: {
-            id: projectMember.id,
-        },
-        data: {
-            role: newRole,
-        },
+      where: {
+        id: projectMember.id,
+      },
+      data: {
+        role: newRole,
+      },
     });
 
     revalidatePath(`/projects/${projectId}`);
     return { success: true };
-
   } catch (error) {
     console.error("Failed to update project member role:", error);
     return {
@@ -235,53 +256,55 @@ export async function updateProjectMemberRole(
 }
 
 export async function removeProjectMember(projectId: string, memberId: string) {
-    try {
-        const session = await auth.api.getSession({
-          headers: await headers(),
-        });
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-        if (!session?.user) {
-          return {
-            success: false,
-            error: "Unauthorized",
-          };
-        }
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
 
-        const projectMember = await prisma.projectMember.findFirst({
-            where: {
-                projectId: parseInt(projectId),
-                workspaceMember: {
-                    userId: memberId
-                }
-            }
-        });
+    const projectMember = await prisma.projectMember.findFirst({
+      where: {
+        projectId: parseInt(projectId),
+        workspaceMember: {
+          userId: memberId,
+        },
+      },
+    });
 
-        if (!projectMember) {
-            return {
-                success: false,
-                error: "Member not found",
-            };
-        }
+    if (!projectMember) {
+      return {
+        success: false,
+        error: "Member not found",
+      };
+    }
 
-        await prisma.projectMember.delete({
-            where: {
-                id: projectMember.id,
-            },
-        });
+    await prisma.projectMember.delete({
+      where: {
+        id: projectMember.id,
+      },
+    });
 
-        revalidatePath(`/projects/${projectId}`);
-        return { success: true };
-
-      } catch (error) {
-        console.error("Failed to remove project member:", error);
-        return {
-          success: false,
-          error: "Failed to remove member",
-        };
-      }
+    revalidatePath(`/projects/${projectId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to remove project member:", error);
+    return {
+      success: false,
+      error: "Failed to remove member",
+    };
+  }
 }
 
-export async function searchWorkspaceMembersForProject(projectId: string, query: string) {
+export async function searchWorkspaceMembersForProject(
+  projectId: string,
+  query: string,
+) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user) return { members: [], isCurrentUser: false };
@@ -290,7 +313,10 @@ export async function searchWorkspaceMembersForProject(projectId: string, query:
     const currentUserEmail = session.user.email;
 
     // If query matches the current user's own email, flag it
-    if (currentUserEmail && query.toLowerCase() === currentUserEmail.toLowerCase()) {
+    if (
+      currentUserEmail &&
+      query.toLowerCase() === currentUserEmail.toLowerCase()
+    ) {
       return { members: [], isCurrentUser: true };
     }
 
@@ -338,7 +364,10 @@ export async function searchWorkspaceMembersForProject(projectId: string, query:
   }
 }
 
-export async function addMemberToProject(projectId: string, workspaceMemberId: string) {
+export async function addMemberToProject(
+  projectId: string,
+  workspaceMemberId: string,
+) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user) return { success: false, error: "Unauthorized" };

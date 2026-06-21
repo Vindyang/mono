@@ -1,3 +1,5 @@
+import { Attachment } from "@/lib/types/attachment";
+
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -8,6 +10,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority | null;
   due_date: string | null;
+  attachments?: Attachment[];
   image: string | null;
   projectId: string;
   created_at: string;
@@ -20,7 +23,10 @@ export interface Task {
   }>;
 }
 
-export type TaskInput = Omit<Task, "id" | "created_at" | "updated_at" | "assignees"> & {
+export type TaskInput = Omit<
+  Task,
+  "id" | "created_at" | "updated_at" | "assignees"
+> & {
   assigneeIds?: string[];
 };
 
@@ -33,6 +39,7 @@ export interface TaskFormData {
   image?: string | null;
   projectId: string;
   assigneeIds?: string[];
+  attachments?: Attachment[];
 }
 
 export interface TaskFilters {
