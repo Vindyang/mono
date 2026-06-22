@@ -7,6 +7,7 @@ import { Project } from "@/lib/types/project";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { getCalendarData } from "./componentsaction/actions";
+import { updateTask } from "../tasks/componentsaction/actions";
 
 export default function CalendarPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -16,15 +17,15 @@ export default function CalendarPage() {
 
   useEffect(() => {
     setMounted(true);
-    
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
         const { tasks, projects, error } = await getCalendarData();
-        
+
         if (error) {
-           toast.error(error);
-           return;
+          toast.error(error);
+          return;
         }
 
         if (tasks) setTasks(tasks);
@@ -40,7 +41,9 @@ export default function CalendarPage() {
     fetchData();
   }, []);
 
-  const handleCreateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleCreateTask = (
+    data: Omit<Task, "id" | "created_at" | "updated_at">,
+  ) => {
     const newTask: Task = {
       ...data,
       id: Math.random().toString(36).substr(2, 9),
@@ -50,33 +53,36 @@ export default function CalendarPage() {
     setTasks([newTask, ...tasks]);
   };
 
-  const handleUpdateTask = (data: Omit<Task, "id" | "created_at" | "updated_at">, taskId?: string) => {
+  const handleUpdateTask = (
+    data: Omit<Task, "id" | "created_at" | "updated_at">,
+    taskId?: string,
+  ) => {
     // Note: The CalendarView passes the task update which includes the ID via closure or we need to find it differently.
     // However, the TaskModal signature for onSubmit is (data: Omit<Task, "id" ...>)
     // In TasksPage, they handle this by keeping 'editingTask' state.
     // In CalendarView, 'selectedTask' is local state.
     // We need to coordinate how the update happens.
-    
+
     // Actually, CalendarView's onTaskUpdate prop needs to know WHICH task to update.
     // But the current signature in CalendarView is: onTaskUpdate: (data: ...) => void
     // It doesn't receive the ID.
     // Let's look at how I defined it in CalendarView.
     // In CalendarView: onSubmit={selectedTask ? onTaskUpdate : onTaskCreate}
     // So onTaskUpdate receives the data, but we need the ID of selectedTask.
-    
+
     // Wait, let's re-read CalendarView.
     // <TaskModal ... onSubmit={selectedTask ? onTaskUpdate : onTaskCreate} ... />
     // If selectedTask is present, onTaskUpdate is called with the NEW data.
     // But onTaskUpdate in CalendarPage needs to know the ID.
     // I should probably wrap the handler in CalendarView or pass the whole function.
-    
+
     // Let's adjust CalendarView to handle this better or fix it here.
     // I'll write the page first, then maybe tweak CalendarView if needed.
     // But wait, I can just wrap it in CalendarView?
     // "onSubmit={selectedTask ? (data) => onTaskUpdate(data) : onTaskCreate}"
     // But how do I get the ID? detailed in CalendarView?
     // Yes, 'selectedTask.id' is available in CalendarView scope.
-    
+
     // So in CalendarView, I should change the prop signature or the call.
     // Current CalendarView props: onTaskUpdate: (data: Omit<...>) => void;
     // This is insufficient for updating a specific task unless we assume it's the "currently selected one" which the parent doesn't know about easily without lifting state.
@@ -90,28 +96,60 @@ export default function CalendarPage() {
     //
     // Let's implement this assuming I'll fix CalendarView to pass (data, taskId).
     // Or even better: (task: Task)
-    
+
     // Let's stick to the current plan:
     // 1. Create Page.
     // 2. Fix CalendarView to pass ID.
-    
+
     // Oh wait, I can't pass (data, taskId) to TaskModal's onSubmit. TaskModal's onSubmit expects (data).
     // So inside CalendarView, the wrapper would be:
     // handleUpdate = (data) => { onTaskUpdate(data, selectedTask.id) }
-    
+
     // So CalendarPage should expect onTaskUpdate to take (data, id).
     // Let's write CalendarPage with that expectation.
-    
+
     console.error("Should be unreachable");
   };
 
-  const handleTaskUpdateWithId = (data: Omit<Task, "id" | "created_at" | "updated_at">, taskId: string) => {
-      const updatedTasks = tasks.map((t) =>
-      t.id === taskId
-        ? { ...t, ...data, updated_at: new Date().toISOString() }
-        : t
-    );
-    setTasks(updatedTasks);
+  const handleTaskUpdateWithId = async (
+    data: Omit<Task, "id" | "created_at" | "updated_at"> & {
+      assigneeIds?: string[];
+      attachmentIds?: string[];
+      pendingAttachments?: Array<{
+        fileUrl: string;
+        fileName: string;
+        fileSize: number | null;
+        mimeType: string | null;
+      }>;
+    },
+    taskId: string,
+  ) => {
+    try {
+      const result = await updateTask(taskId, {
+        title: data.title,
+        description: data.description ?? null,
+        status: data.status,
+        priority: data.priority,
+        due_date: data.due_date ?? null,
+        image: data.image ?? null,
+        projectId: data.projectId,
+        assigneeIds: data.assigneeIds,
+        attachmentIds: data.attachmentIds,
+        pendingAttachments: data.pendingAttachments,
+      });
+
+      if (result.success && result.task) {
+        const updatedTasks = tasks.map((t) =>
+          t.id === taskId ? result.task! : t,
+        );
+        setTasks(updatedTasks);
+      } else {
+        toast.error(result.error || "Failed to update task");
+      }
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      toast.error("Failed to update task");
+    }
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -129,12 +167,14 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
-       <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            View and manage your tasks by date
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Calendar
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          View and manage your tasks by date
+        </p>
+      </div>
 
       <div className="flex-1 min-h-0">
         <CalendarView

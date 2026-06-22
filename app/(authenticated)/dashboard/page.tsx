@@ -22,7 +22,7 @@ dayjs.extend(isSameOrAfter);
 // const INITIAL_PROJECTS: Project[] = [ ... ];
 
 import { getDashboardData } from "./componentsaction/actions";
-import { updateTask, deleteTask } from "../tasks/componentsaction/actions";
+import { updateTask, deleteTask, updateTaskStatus } from "../tasks/componentsaction/actions";
 import { toast } from "sonner";
 import { TaskModal } from "../tasks/components/task-modal";
 import {
@@ -46,6 +46,7 @@ function DashboardContent() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingTaskId, setTogglingTaskId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -134,6 +135,7 @@ function DashboardContent() {
       due_date: data.due_date ?? null,
       image: data.image ?? null,
       projectId: data.projectId,
+      assigneeIds: data.assignees?.map((a) => a.id),
     });
 
     if (result.success && result.task) {
@@ -175,6 +177,19 @@ function DashboardContent() {
   const openEditModal = (task: Task) => {
     setEditingTask(task);
     setIsModalOpen(true);
+  };
+
+  const handleStatusToggle = async (task: Task) => {
+    if (togglingTaskId) return;
+    const newStatus = task.status === "done" ? "todo" : "done";
+    setTogglingTaskId(task.id);
+    setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: newStatus } : t));
+    const result = await updateTaskStatus(task.id, newStatus);
+    if (!result.success) {
+      setTasks((prev) => prev.map((t) => t.id === task.id ? { ...t, status: task.status } : t));
+      toast.error(result.error || "Failed to update task status");
+    }
+    setTogglingTaskId(null);
   };
 
   // Group tasks by Date -> Project
@@ -304,7 +319,7 @@ function DashboardContent() {
                         description: task.description,
                         status: task.status,
                         priority: task.priority,
-                        dueDate: task.due_date || undefined,
+                        due_date: task.due_date,
                         assignees: task.assignees,
                       }}
                       project={taskProject}
@@ -313,6 +328,7 @@ function DashboardContent() {
                       showDescription={true}
                       onEdit={() => openEditModal(task)}
                       onDelete={() => handleDeleteTask(task)}
+                      onStatusToggle={() => handleStatusToggle(task)}
                       clickable={false}
                     />
                   );

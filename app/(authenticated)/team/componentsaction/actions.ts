@@ -84,7 +84,14 @@ export async function getTeamData() {
 
     const workspaceId = userMembership.workspaceId;
 
-    // 2. Fetch all members of this workspace
+    // 2. Fetch the project IDs the current user belongs to (for scoping visibility)
+    const currentUserProjectAssignments = await prisma.projectMember.findMany({
+      where: { workspaceMemberId: userMembership.id },
+      select: { projectId: true },
+    });
+    const visibleProjectIds = new Set(currentUserProjectAssignments.map((pa) => pa.projectId));
+
+    // 3. Fetch all members of this workspace
     const membersData = await prisma.workspaceMember.findMany({
       where: {
         workspaceId: workspaceId,
@@ -108,7 +115,7 @@ export async function getTeamData() {
       },
     });
 
-    // 3. Fetch pending invitations
+    // 4. Fetch pending invitations
     const pendingInvitesCount = await prisma.invitation.count({
       where: {
         workspaceId: workspaceId,
@@ -116,7 +123,7 @@ export async function getTeamData() {
       },
     });
 
-    // 4. Transform Data
+    // 5. Transform Data — only expose projects the current user can also see
     const members: TeamMember[] = membersData.map((m) => ({
       id: m.user.id,
       name: m.user.name,
@@ -125,10 +132,12 @@ export async function getTeamData() {
       role: ROLE_MAP[m.role],
       status: MEMBER_STATUS_MAP[m.status],
       joinedAt: dayjs(m.joinedAt).format("YYYY-MM-DD"),
-      projects: m.projectAssignments.map((pa) => ({
-        id: pa.projectId.toString(),
-        name: pa.project.name,
-      })),
+      projects: m.projectAssignments
+        .filter((pa) => visibleProjectIds.has(pa.projectId))
+        .map((pa) => ({
+          id: pa.projectId.toString(),
+          name: pa.project.name,
+        })),
     }));
 
     // 5. Calculate Stats
@@ -807,3 +816,44 @@ export async function acceptInvitation(invitationId: string) {
     };
   }
 }
+
+export async function removeWorkspaceMember(memberId: string) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { success: false, error: "Unauthorized" };
+
+    const userId = session.user.id;
+
+    const currentUserMembership = await prisma.workspaceMember.findFirst({
+      where: { userId },
+    });
+
+    if (!currentUserMembership || currentUserMembership.role !== "OWNER") {
+      return { success: false, error: "Only workspace owners can remove members" };
+    }
+
+    if (memberId === userId) {
+      return { success: false, error: "You cannot remove yourself" };
+    }
+
+    const targetMember = await prisma.workspaceMember.findFirst({
+      where: { workspaceId: currentUserMembership.workspaceId, userId: memberId },
+    });
+
+    if (!targetMember) {
+      return { success: false, error: "Member not found" };
+    }
+
+    if (targetMember.role === "OWNER") {
+      return { success: false, error: "Cannot remove another owner" };
+    }
+
+    await prisma.workspaceMember.delete({ where: { id: targetMember.id } });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to remove workspace member:", error);
+    return { success: false, error: "Failed to remove member" };
+  }
+}
+

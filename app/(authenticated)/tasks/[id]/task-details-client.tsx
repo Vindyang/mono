@@ -32,13 +32,28 @@ interface TaskDetailsClientProps {
   currentUserRole: string | null;
 }
 
-export function TaskDetailsClient({ task, projects, currentUserRole }: TaskDetailsClientProps) {
+export function TaskDetailsClient({
+  task,
+  projects,
+  currentUserRole,
+}: TaskDetailsClientProps) {
   const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleUpdateTask = async (data: Omit<Task, "id" | "created_at" | "updated_at">) => {
+  const handleUpdateTask = async (
+    data: Omit<Task, "id" | "created_at" | "updated_at"> & {
+      assigneeIds?: string[];
+      attachmentIds?: string[];
+      pendingAttachments?: Array<{
+        fileUrl: string;
+        fileName: string;
+        fileSize: number | null;
+        mimeType: string | null;
+      }>;
+    },
+  ) => {
     const result = await updateTask(task.id, {
       title: data.title,
       description: data.description,
@@ -47,6 +62,9 @@ export function TaskDetailsClient({ task, projects, currentUserRole }: TaskDetai
       due_date: data.due_date,
       image: data.image,
       projectId: data.projectId,
+      assigneeIds: data.assigneeIds,
+      attachmentIds: data.attachmentIds,
+      pendingAttachments: data.pendingAttachments,
     });
 
     if (result.success) {
@@ -103,6 +121,7 @@ export function TaskDetailsClient({ task, projects, currentUserRole }: TaskDetai
       </DropdownMenu>
 
       <TaskModal
+        key={`edit-task-${task.id}`}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         task={task}
@@ -110,12 +129,16 @@ export function TaskDetailsClient({ task, projects, currentUserRole }: TaskDetai
         onSubmit={handleUpdateTask}
       />
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the task "{task.title}". This action cannot be undone.
+              This will permanently delete the task &quot;{task.title}&quot;.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

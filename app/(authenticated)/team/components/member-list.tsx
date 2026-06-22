@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import { MoreHorizontal, Mail, Search, Pencil, Users } from "lucide-react";
+import { MoreHorizontal, Search, Trash2, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -25,29 +35,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { toast } from "sonner";
+import { removeWorkspaceMember } from "../componentsaction/actions";
 
 interface MemberListProps {
   members: TeamMember[];
   currentUserId?: string;
   currentUserRole?: string;
   hideProjects?: boolean;
+  onMemberRemoved?: () => void;
 }
 
-export function MemberList({ members, currentUserId, currentUserRole, hideProjects = false }: MemberListProps) {
+export function MemberList({ members, currentUserId, currentUserRole, hideProjects = false, onMemberRemoved }: MemberListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const filteredMembers = members.filter((member) => {
-    const matchesSearch = 
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch =
+      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesRole = roleFilter === "all" || member.role === roleFilter;
 
     return matchesSearch && matchesRole;
   });
 
+  const handleConfirmRemove = async () => {
+    if (!memberToRemove) return;
+    setIsRemoving(true);
+    const result = await removeWorkspaceMember(memberToRemove.id);
+    setIsRemoving(false);
+    if (result.success) {
+      toast.success(`${memberToRemove.name} has been removed from the workspace`);
+      setMemberToRemove(null);
+      onMemberRemoved?.();
+    } else {
+      toast.error(result.error ?? "Failed to remove member");
+    }
+  };
+
+  const isOwner = currentUserRole === "Owner";
+
   return (
+    <>
     <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -79,7 +111,7 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
         <div className="col-span-3 hidden md:block">Role</div>
         {!hideProjects && <div className="col-span-3 hidden md:block">Projects</div>}
         <div className="col-span-2 hidden md:block">Status</div>
-        {/* <div className="col-span-7 md:col-span-1 text-right">Actions</div> */ }
+        {isOwner && <div className="col-span-1 hidden md:block" />}
       </div>
       <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
         {filteredMembers.length > 0 ? (
@@ -103,14 +135,14 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
                     </span>
                 </div>
                 </div>
-                
+
                 {/* Role */}
                 <div className="col-span-3 hidden md:block">
                 <Badge variant="outline" className="capitalize font-normal text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800">
                     {member.role}
                 </Badge>
                 </div>
-                
+
                 {/* Projects */}
                 {!hideProjects && (
                 <div className="col-span-3 hidden md:block">
@@ -132,7 +164,7 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
                 <div className="col-span-2 hidden md:block">
                     <div className="flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${
-                            member.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_0_rgba(16,185,129,0.5)]' : 
+                            member.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_0_rgba(16,185,129,0.5)]' :
                             member.status === 'busy' ? 'bg-amber-500' : 'bg-zinc-300 dark:bg-zinc-600'
                         }`} />
                         <span className="capitalize text-zinc-600 dark:text-zinc-400">
@@ -140,35 +172,33 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
                         </span>
                     </div>
                 </div>
-                
-                {/* Actions */ }
-                {/* <div className="col-span-7 flex justify-end md:col-span-1">
-                {member.id !== currentUserId && currentUserRole === "Owner" && (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px]">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit Role
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Email
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                        Remove Member
-                    </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+
+                {/* Actions */}
+                {isOwner && (
+                <div className="col-span-1 hidden md:flex justify-end">
+                  {member.id !== currentUserId && member.role !== "Owner" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[160px]">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setMemberToRemove({ id: member.id, name: member.name })}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove Member
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
                 )}
-                </div> */}
             </div>
             ))
         ) : (
@@ -189,5 +219,27 @@ export function MemberList({ members, currentUserId, currentUserRole, hideProjec
       </div>
     </div>
     </div>
+
+    <AlertDialog open={!!memberToRemove} onOpenChange={(open) => { if (!open) setMemberToRemove(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove member?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will remove <span className="font-medium text-foreground">{memberToRemove?.name}</span> from the workspace and all projects they belong to. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isRemoving}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isRemoving}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={handleConfirmRemove}
+          >
+            {isRemoving ? "Removing..." : "Remove"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

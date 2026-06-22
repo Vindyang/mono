@@ -38,6 +38,18 @@ export async function getCalendarData() {
       },
       include: {
         project: true,
+        assignees: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
       },
       // For calendar, we might want a specific order or just fetch all
       orderBy: {
@@ -48,33 +60,41 @@ export async function getCalendarData() {
     // 2. Fetch all active projects
     const projectsData = await prisma.project.findMany({
       where: {
-         members: {
-            some: {
-                workspaceMember: {
-                    userId: userId
-                }
-            }
-         },
-         status: "ACTIVE"
+        members: {
+          some: {
+            workspaceMember: {
+              userId: userId,
+            },
+          },
+        },
+        status: "ACTIVE",
       },
       orderBy: {
-        name: "asc", 
+        name: "asc",
       },
     });
 
     // 3. Transform Data (Int -> String)
-    
+
     const tasks: Task[] = tasksData.map((t) => ({
       id: t.id.toString(),
       title: t.title,
       description: t.description,
       status: t.status.toLowerCase() as "todo" | "in_progress" | "done",
-      priority: t.priority ? (t.priority.toLowerCase() as "low" | "medium" | "high") : null,
+      priority: t.priority
+        ? (t.priority.toLowerCase() as "low" | "medium" | "high")
+        : null,
       due_date: t.dueDate ? dayjs(t.dueDate).format("YYYY-MM-DD") : null,
       projectId: t.projectId.toString(),
       created_at: dayjs(t.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(t.updatedAt).format("YYYY-MM-DD"),
       image: t.image,
+      assignees: t.assignees.map((a) => ({
+        id: a.user.id,
+        name: a.user.name,
+        email: a.user.email,
+        image: a.user.image || undefined,
+      })),
     }));
 
     const projects: Project[] = projectsData.map((p) => ({
@@ -82,6 +102,7 @@ export async function getCalendarData() {
       name: p.name,
       color: p.color,
       description: p.description || undefined,
+      dueDate: p.dueDate ? dayjs(p.dueDate).format("YYYY-MM-DD") : null,
     }));
 
     return {

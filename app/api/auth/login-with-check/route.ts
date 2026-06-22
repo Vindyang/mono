@@ -37,7 +37,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (!magicLinkResponse.ok) {
-      const errorData = await magicLinkResponse.json();
+      const text = await magicLinkResponse.text();
+      let errorData: unknown;
+      try { errorData = JSON.parse(text); } catch { errorData = { error: text || "Unknown error" }; }
       return NextResponse.json(errorData, { status: magicLinkResponse.status });
     }
 

@@ -11,23 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import dayjs from "dayjs";
-
-interface TaskAssignee {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-}
+import type { TaskStatus, TaskPriority } from "@/lib/types/task";
 
 interface TaskCardProps {
   task: {
     id: string;
     title: string;
     description?: string | null;
-    status: "todo" | "in_progress" | "done";
-    priority?: "low" | "medium" | "high" | null;
-    dueDate?: string;
-    assignees?: TaskAssignee[];
+    status: TaskStatus;
+    priority?: TaskPriority | null;
+    due_date?: string | null;
+    assignees?: Array<{ id: string; name: string; email: string; image?: string }>;
   };
   project?: {
     id: string;
@@ -39,6 +33,7 @@ interface TaskCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onView?: () => void;
+  onStatusToggle?: () => void;
   clickable?: boolean;
   showDueDate?: boolean;
 }
@@ -51,6 +46,7 @@ export function TaskCard({
   onEdit,
   onDelete,
   onView,
+  onStatusToggle,
   clickable = true,
   showDueDate = true,
 }: TaskCardProps) {
@@ -89,7 +85,7 @@ export function TaskCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            // TODO: Quick status toggle
+            onStatusToggle?.();
           }}
           className="mt-0.5 flex-shrink-0"
         >
@@ -154,10 +150,10 @@ export function TaskCard({
             )}
 
             {/* Due Date */}
-            {showDueDate && task.dueDate && (
+            {showDueDate && task.due_date && (
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <span>{dayjs(task.dueDate).format("MMM D")}</span>
+                <span>{dayjs(task.due_date).format("MMM D")}</span>
               </div>
             )}
 

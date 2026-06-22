@@ -75,9 +75,7 @@ export function DeleteProjectDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will archive the project &quot;{projectName}&quot;. All tasks and data will
-            be preserved but the project will no longer appear in your active
-            projects list.
+            This will permanently delete the project &quot;{projectName}&quot; and all its tasks. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
