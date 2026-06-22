@@ -44,6 +44,7 @@ export function TaskDetailsClient({
 
   const handleUpdateTask = async (
     data: Omit<Task, "id" | "created_at" | "updated_at"> & {
+      assigneeIds?: string[];
       attachmentIds?: string[];
       pendingAttachments?: Array<{
         fileUrl: string;
@@ -61,6 +62,7 @@ export function TaskDetailsClient({
       due_date: data.due_date,
       image: data.image,
       projectId: data.projectId,
+      assigneeIds: data.assigneeIds,
       attachmentIds: data.attachmentIds,
       pendingAttachments: data.pendingAttachments,
     });
@@ -135,8 +137,8 @@ export function TaskDetailsClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the task "{task.title}". This action
-              cannot be undone.
+              This will permanently delete the task &quot;{task.title}&quot;.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

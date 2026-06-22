@@ -3,4 +3,5 @@ export interface Project {
   name: string;
   color: string;
   description?: string;
+  dueDate?: string | null;
 }

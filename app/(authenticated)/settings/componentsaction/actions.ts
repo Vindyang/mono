@@ -42,8 +42,8 @@ export async function getSettingsData() {
         userId: userId,
       },
       include: {
-        workspace: true
-      }
+        workspace: true,
+      },
     });
 
     const data: SettingsData = {
@@ -52,10 +52,12 @@ export async function getSettingsData() {
         email: user.email,
         image: user.image || "",
       },
-      workspace: userMembership?.workspace ? {
-        name: userMembership.workspace.name,
-        slug: userMembership.workspace.slug
-      } : undefined
+      workspace: userMembership?.workspace
+        ? {
+            name: userMembership.workspace.name,
+            slug: userMembership.workspace.slug,
+          }
+        : undefined,
     };
 
     return {
@@ -91,10 +93,10 @@ export async function updateProfile(firstName: string, lastName: string) {
     const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
     if (!fullName) {
-        return {
-            success: false,
-            error: "Name cannot be empty",
-        };
+      return {
+        success: false,
+        error: "Name cannot be empty",
+      };
     }
 
     await prisma.user.update({
@@ -109,12 +111,50 @@ export async function updateProfile(firstName: string, lastName: string) {
     return {
       success: true,
     };
-
   } catch (error) {
     console.error("Failed to update profile:", error);
     return {
       success: false,
       error: "Failed to update profile",
+    };
+  }
+}
+
+/**
+ * Removes the user's profile picture.
+ */
+export async function removeProfilePicture() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        image: null,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to remove profile picture:", error);
+    return {
+      success: false,
+      error: "Failed to remove profile picture",
     };
   }
 }

@@ -26,6 +26,7 @@ import { SortableTaskCard } from "./sortable-task-card";
 import { TaskCard } from "./task-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Empty, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 import { CheckCircle2, Circle, Timer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -46,13 +47,17 @@ function KanbanColumn({
   tasks,
   onEdit,
   onDelete,
+  activeId,
+  overId,
 }: {
   column: Column;
   tasks: Task[];
   onEdit: (t: Task) => void;
   onDelete: (id: string) => void;
+  activeId: string | null;
+  overId: string | null;
 }) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: {
       type: "Column",
@@ -60,10 +65,19 @@ function KanbanColumn({
     },
   });
 
+  // Determine if active task is currently being dragged over this column
+  // but not over a specific task within it
+  const isActiveOverColumn = isOver && overId === column.id;
+
   return (
     <div
       ref={setNodeRef}
-      className="border border-border bg-card/50 transition-all duration-200 flex flex-col rounded-lg overflow-hidden h-auto xl:h-full"
+      className={cn(
+        "border bg-card/50 transition-all duration-200 flex flex-col rounded-lg overflow-hidden h-auto xl:h-full",
+        isActiveOverColumn && tasks.length > 0
+          ? "border-primary/50 ring-2 ring-primary/20 shadow-lg shadow-primary/10"
+          : "border-border",
+      )}
     >
       {/* Column Header */}
       <div className="p-3 text-foreground bg-secondary/50 border-b border-border">
@@ -87,25 +101,52 @@ function KanbanColumn({
           <ScrollArea className="flex-1">
             <div className="space-y-2 pb-4 min-h-[100px]">
               {tasks.length === 0 ? (
-                <div className="py-8">
-                  <Empty>
-                    <EmptyMedia>
-                      {column.id === "todo" && <Circle className="h-10 w-10" />}
-                      {column.id === "in_progress" && <Timer className="h-10 w-10" />}
-                      {column.id === "done" && <CheckCircle2 className="h-10 w-10" />}
-                    </EmptyMedia>
-                    <EmptyTitle className="text-sm">No tasks</EmptyTitle>
-                  </Empty>
-                </div>
+                isActiveOverColumn ? (
+                  <div className="h-20 rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground">
+                      Drop here
+                    </span>
+                  </div>
+                ) : (
+                  <div className="py-8">
+                    <Empty>
+                      <EmptyMedia>
+                        {column.id === "todo" && (
+                          <Circle className="h-10 w-10" />
+                        )}
+                        {column.id === "in_progress" && (
+                          <Timer className="h-10 w-10" />
+                        )}
+                        {column.id === "done" && (
+                          <CheckCircle2 className="h-10 w-10" />
+                        )}
+                      </EmptyMedia>
+                      <EmptyTitle className="text-sm">No tasks</EmptyTitle>
+                    </Empty>
+                  </div>
+                )
               ) : (
-                tasks.map((task) => (
-                  <SortableTaskCard
-                    key={task.id}
-                    task={task}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                  />
-                ))
+                <>
+                  {tasks.map((task) => (
+                    <div key={task.id} className="relative">
+                      {/* Drop placeholder — shown above the task being hovered */}
+                      {activeId &&
+                        activeId !== task.id &&
+                        overId === task.id && (
+                          <div className="h-2 w-full rounded-md bg-primary/20 border border-dashed border-primary/40 mb-2 transition-all duration-150" />
+                        )}
+                      <SortableTaskCard
+                        task={task}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
+                    </div>
+                  ))}
+                  {/* Drop placeholder at the end of column when hovering column itself */}
+                  {isActiveOverColumn && (
+                    <div className="h-2 w-full rounded-md bg-primary/20 border border-dashed border-primary/40 mt-1 transition-all duration-150" />
+                  )}
+                </>
               )}
             </div>
           </ScrollArea>
@@ -122,6 +163,7 @@ export function KanbanBoard({
   onDelete,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   const columns: Column[] = [
     { id: "todo", title: "To Do" },
@@ -130,8 +172,12 @@ export function KanbanBoard({
   ];
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Require 5px movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor),
   );
 
   const columnTasks = useMemo(() => {
@@ -153,91 +199,66 @@ export function KanbanBoard({
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id as string);
+    setOverId(null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-    // console.log("DragOver", active.id, "Over", over.id);
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    if (activeId === overId) return;
-
-    const isActiveTask = active.data.current?.type === "Task";
-    const isOverTask = over.data.current?.type === "Task";
-
-    if (!isActiveTask) return;
-
-    // Dropping a Task over another Task
-    if (isActiveTask && isOverTask) {
-      const activeTask = tasks.find((t) => t.id === activeId);
-      const overTask = tasks.find((t) => t.id === overId);
-
-      if (activeTask && overTask && activeTask.status !== overTask.status) {
-        const activeIndex = tasks.findIndex((t) => t.id === activeId);
-        const overIndex = tasks.findIndex((t) => t.id === overId);
-
-        if (tasks[activeIndex].status !== tasks[overIndex].status) {
-          const newTasks = [...tasks];
-          newTasks[activeIndex] = {
-            ...newTasks[activeIndex],
-            status: tasks[overIndex].status,
-          };
-          onTasksChange(
-            arrayMove(
-              newTasks,
-              activeIndex,
-              overIndex - (activeIndex < overIndex ? 1 : 0)
-            )
-          );
-        }
-      } else if (
-        activeTask &&
-        overTask &&
-        activeTask.status === overTask.status
-      ) {
-        const activeIndex = tasks.findIndex((t) => t.id === activeId);
-        const overIndex = tasks.findIndex((t) => t.id === overId);
-        onTasksChange(arrayMove(tasks, activeIndex, overIndex));
-      }
-    }
-
-    // Dropping a Task over a Column
-    const isOverColumn = columns.some((col) => col.id === overId);
-    if (isActiveTask && isOverColumn) {
-      const activeTask = tasks.find((t) => t.id === activeId);
-      if (activeTask && activeTask.status !== overId) {
-        const activeIndex = tasks.findIndex((t) => t.id === activeId);
-        const newTasks = [...tasks];
-        newTasks[activeIndex] = {
-          ...newTasks[activeIndex],
-          status: overId as Task["status"],
-        };
-        onTasksChange(arrayMove(newTasks, activeIndex, newTasks.length - 1));
-      }
-    }
+    const { over } = event;
+    setOverId(over ? (over.id as string) : null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
     const { active, over } = event;
+    setActiveId(null);
+    setOverId(null);
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
+    const dragActiveId = active.id;
+    const dragOverId = over.id;
 
-    if (activeId === overId) return;
+    if (dragActiveId === dragOverId) return;
 
-    const activeIndex = tasks.findIndex((t) => t.id === activeId);
-    const overIndex = tasks.findIndex((t) => t.id === overId);
+    const activeIndex = tasks.findIndex((t) => t.id === dragActiveId);
+    const isOverColumn = columns.some((col) => col.id === dragOverId);
+    const isOverTask = !isOverColumn;
 
-    if (
-      activeIndex !== -1 &&
-      overIndex !== -1 &&
-      tasks[activeIndex].status === tasks[overIndex].status
-    ) {
+    if (activeIndex === -1) return;
+
+    // Case 1: Dropping over a Column (cross-column or same-column reorder to end)
+    if (isOverColumn) {
+      const targetColumn = dragOverId as Task["status"];
+      const activeTask = tasks[activeIndex];
+
+      if (activeTask.status !== targetColumn) {
+        // Cross-column: change status and move to end of target column
+        const newTasks = [...tasks];
+        newTasks[activeIndex] = {
+          ...newTasks[activeIndex],
+          status: targetColumn,
+        };
+        onTasksChange(arrayMove(newTasks, activeIndex, newTasks.length - 1));
+      }
+      return;
+    }
+
+    // Case 2: Dropping over a Task
+    const overIndex = tasks.findIndex((t) => t.id === dragOverId);
+    if (overIndex === -1) return;
+
+    const activeTask = tasks[activeIndex];
+    const overTask = tasks[overIndex];
+
+    if (activeTask.status !== overTask.status) {
+      // Cross-column: change status and position
+      const newTasks = [...tasks];
+      newTasks[activeIndex] = {
+        ...newTasks[activeIndex],
+        status: overTask.status,
+      };
+      const adjustedOverIndex = overIndex - (activeIndex < overIndex ? 1 : 0);
+      onTasksChange(arrayMove(newTasks, activeIndex, adjustedOverIndex));
+    } else {
+      // Same-column: reorder
       onTasksChange(arrayMove(tasks, activeIndex, overIndex));
     }
   };
@@ -254,7 +275,7 @@ export function KanbanBoard({
 
   const activeTask = useMemo(
     () => tasks.find((t) => t.id === activeId),
-    [activeId, tasks]
+    [activeId, tasks],
   );
 
   return (
@@ -274,12 +295,18 @@ export function KanbanBoard({
             <TabsTrigger value="done">Done</TabsTrigger>
           </TabsList>
           {columns.map((column) => (
-            <TabsContent key={column.id} value={column.id} className="flex-1 mt-0 h-full min-h-0 data-[state=inactive]:hidden">
+            <TabsContent
+              key={column.id}
+              value={column.id}
+              className="flex-1 mt-0 h-full min-h-0 data-[state=inactive]:hidden"
+            >
               <KanbanColumn
                 column={column}
                 tasks={columnTasks[column.id]}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                activeId={activeId}
+                overId={overId}
               />
             </TabsContent>
           ))}
@@ -295,6 +322,8 @@ export function KanbanBoard({
             tasks={columnTasks[column.id]}
             onEdit={onEdit}
             onDelete={onDelete}
+            activeId={activeId}
+            overId={overId}
           />
         ))}
       </div>
@@ -302,11 +331,7 @@ export function KanbanBoard({
       <DragOverlay dropAnimation={dropAnimation}>
         {activeTask ? (
           <div className="pointer-events-none cursor-grabbing">
-            <TaskCard
-                task={activeTask}
-                onEdit={onEdit}
-                onDelete={onDelete}
-            />
+            <TaskCard task={activeTask} onEdit={onEdit} onDelete={onDelete} />
           </div>
         ) : null}
       </DragOverlay>

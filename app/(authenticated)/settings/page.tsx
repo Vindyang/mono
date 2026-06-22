@@ -1,78 +1,176 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Github, Slack, Figma } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getSettingsData, updateProfile, SettingsData } from "./componentsaction/actions"; // Import action
-import { toast } from "sonner"; // Import toast
+import {
+  getSettingsData,
+  updateProfile,
+  removeProfilePicture,
+  SettingsData,
+} from "./componentsaction/actions";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const [data, setData] = useState<SettingsData | null>(null); // State for data
+  const [data, setData] = useState<SettingsData | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Loading state
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   // Form States
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
+  const [isEditing, setIsEditing] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    
-    // Fetch data on mount
+
     const fetchData = async () => {
-        try {
-            setIsLoading(true);
-            const { data, error } = await getSettingsData();
-            if (error) {
-                toast.error(error);
-                return;
-            }
-            if (data) {
-                setData(data);
-                // Initialize form state
-                const names = data.user.name.split(' ');
-                setFirstName(names[0] || "");
-                setLastName(names.slice(1).join(' ') || "");
-            }
-        } catch (error) {
-            console.error("Failed to fetch settings", error);
-            toast.error("Failed to load settings");
-        } finally {
-            setIsLoading(false);
+      try {
+        setIsLoading(true);
+        const { data, error } = await getSettingsData();
+        if (error) {
+          toast.error(error);
+          return;
         }
+        if (data) {
+          setData(data);
+          setAvatarUrl(data.user.image);
+          const names = data.user.name.split(" ");
+          setFirstName(names[0] || "");
+          setLastName(names.slice(1).join(" ") || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch settings", error);
+        toast.error("Failed to load settings");
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
   }, []);
 
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Cancel editing — reset fields to original values
+      if (data) {
+        const names = data.user.name.split(" ");
+        setFirstName(names[0] || "");
+        setLastName(names.slice(1).join(" ") || "");
+      }
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+  };
+
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
-    
+
     const { success, error } = await updateProfile(firstName, lastName);
 
     setIsSavingProfile(false);
 
     if (success) {
-        toast.success("Profile updated successfully");
-        // Optionally re-fetch or just update local state if we had a full user object
-        // For now, local state (inputs) is already updated.
+      setIsEditing(false);
+      toast.success("Profile updated successfully");
     } else {
-        toast.error(error || "Failed to update profile");
+      toast.error(error || "Failed to update profile");
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size must be less than 2MB");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const formPayload = new FormData();
+      formPayload.append("file", file);
+
+      const response = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formPayload,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || "Failed to upload avatar");
+      }
+
+      const { avatarUrl } = await response.json();
+      setAvatarUrl(avatarUrl);
+      toast.success("Profile picture updated");
+    } catch (error) {
+      console.error("Avatar upload error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload avatar",
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input so the same file can be re-selected
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (isRemovingAvatar) return;
+
+    setIsRemovingAvatar(true);
+
+    try {
+      const { success, error } = await removeProfilePicture();
+
+      if (success) {
+        setAvatarUrl("");
+        toast.success("Profile picture removed");
+      } else {
+        throw new Error(error || "Failed to remove profile picture");
+      }
+    } catch (error) {
+      console.error("Avatar remove error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to remove profile picture",
+      );
+    } finally {
+      setIsRemovingAvatar(false);
     }
   };
 
@@ -87,72 +185,124 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] gap-6 p-4 md:p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Settings
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Manage your workspace preferences and account details.
         </p>
       </div>
-      
+
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+        <TabsList className="w-full max-w-[400px]">
           <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         {/* Account Settings */}
         <TabsContent value="account" className="mt-6 space-y-6">
           <div className="grid gap-6">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Profile</CardTitle>
-                      <CardDescription>
-                          Manage your public profile and personal details.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                      <div className="space-y-2">
-                          <Label>Profile Picture</Label>
-                          <div className="flex items-center gap-4">
-                              <Avatar className="h-16 w-16">
-                                  <AvatarImage src={data?.user.image} alt={data?.user.name} />
-                                  <AvatarFallback>{data?.user.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex gap-2">
-                                  <Button variant="outline" size="sm">Change</Button>
-                                  <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600">Remove</Button>
-                              </div>
-                          </div>
-                      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile</CardTitle>
+                <CardDescription>
+                  Manage your public profile and personal details.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Profile Picture</Label>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      {avatarUrl ? (
+                        <AvatarImage src={avatarUrl} alt={data?.user.name} />
+                      ) : null}
+                      <AvatarFallback>
+                        {data?.user.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        disabled={isUploadingAvatar}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                      >
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          "Change"
+                        )}
+                      </Button>
+                      {avatarUrl && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-600"
+                          onClick={handleRemoveAvatar}
+                          disabled={isRemovingAvatar}
+                        >
+                          {isRemovingAvatar ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                              Removing...
+                            </>
+                          ) : (
+                            "Remove"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-                      <div className="grid gap-4 md:grid-cols-2">
-                          <div className="grid gap-2">
-                              <Label htmlFor="first-name">First name</Label>
-                              <Input 
-                                id="first-name" 
-                                value={firstName} 
-                                onChange={(e) => setFirstName(e.target.value)}
-                              />
-                          </div>
-                          <div className="grid gap-2">
-                              <Label htmlFor="last-name">Last name</Label>
-                              <Input 
-                                id="last-name" 
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                              />
-                          </div>
-                      </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="first-name">First name</Label>
+                    <Input
+                      id="first-name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="last-name">Last name</Label>
+                    <Input
+                      id="last-name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
 
-                      <div className="grid gap-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input id="email" defaultValue={data?.user.email} disabled />
-                          <p className="text-[0.8rem] text-muted-foreground">
-                              Your email address is managed by your organization.
-                          </p>
-                      </div>
-                  </CardContent>
-                   <CardFooter className="border-t px-6 py-4">
-                      <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" defaultValue={data?.user.email} disabled />
+                  <p className="text-[0.8rem] text-muted-foreground">
+                    Your email address is managed by your organization.
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter className="border-t px-6 py-4 flex justify-between">
+                <div className="flex gap-2">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        onClick={handleSaveProfile}
+                        disabled={isSavingProfile}
+                      >
                         {isSavingProfile ? (
                           <>
                             <Spinner className="h-4 w-4 mr-2" />
@@ -162,64 +312,36 @@ export default function SettingsPage() {
                           "Save Profile"
                         )}
                       </Button>
-                  </CardFooter>
-              </Card>
+                      <Button
+                        variant="ghost"
+                        onClick={handleEditToggle}
+                        disabled={isSavingProfile}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button variant="outline" onClick={handleEditToggle}>
+                      Edit Profile
+                    </Button>
+                  )}
+                </div>
+              </CardFooter>
+            </Card>
 
-               <Card className="border-red-200 dark:border-red-900">
-                  <CardHeader>
-                      <CardTitle className="text-red-600 dark:text-red-500">Danger Zone</CardTitle>
-                      <CardDescription>
-                          Irreversible and destructive actions.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                       <Button variant="destructive">Delete Account</Button>
-                  </CardContent>
-              </Card>
-          </div>
-        </TabsContent>
-
-        {/* Integrations Settings */}
-        <TabsContent value="integrations" className="mt-6 space-y-6">
-          <div className="grid gap-4">
-              <div className="flex items-center justify-between space-x-4 rounded-lg border p-4">
-                  <div className="flex items-center space-x-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-zinc-50 dark:bg-zinc-900">
-                          <Github className="h-6 w-6" />
-                      </div>
-                      <div>
-                          <p className="text-sm font-medium leading-none">GitHub</p>
-                          <p className="text-sm text-muted-foreground">Sync issues and pull requests.</p>
-                      </div>
-                  </div>
-                  <Button variant="outline">Connect</Button>
-              </div>
-              
-              <div className="flex items-center justify-between space-x-4 rounded-lg border p-4">
-                  <div className="flex items-center space-x-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-zinc-50 dark:bg-zinc-900">
-                          <Slack className="h-6 w-6" />
-                      </div>
-                      <div>
-                          <p className="text-sm font-medium leading-none">Slack</p>
-                          <p className="text-sm text-muted-foreground">Receive notifications in your channels.</p>
-                      </div>
-                  </div>
-                  <Button variant="outline">Connect</Button>
-              </div>
-
-              <div className="flex items-center justify-between space-x-4 rounded-lg border p-4">
-                  <div className="flex items-center space-x-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-zinc-50 dark:bg-zinc-900">
-                          <Figma className="h-6 w-6" />
-                      </div>
-                      <div>
-                          <p className="text-sm font-medium leading-none">Figma</p>
-                          <p className="text-sm text-muted-foreground">Embed designs directly in tasks.</p>
-                      </div>
-                  </div>
-                   <Button variant="secondary" disabled>Coming Soon</Button>
-              </div>
+            <Card className="border-red-200 dark:border-red-900">
+              <CardHeader>
+                <CardTitle className="text-red-600 dark:text-red-500">
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Irreversible and destructive actions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="destructive">Delete Account</Button>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

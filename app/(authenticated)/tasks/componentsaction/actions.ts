@@ -551,14 +551,38 @@ export async function updateTask(
       });
     }
 
-    // Re-fetch with attachments included
-    const taskWithAttachments = await prisma.task.findUnique({
+    // Re-fetch with attachments and assignees included
+    const taskWithDetails = await prisma.task.findUnique({
       where: { id: parseInt(taskId) },
-      include: { project: true, attachments: true },
+      include: {
+        project: true,
+        attachments: true,
+        assignees: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // Determine the final attachments set
-    const finalAttachments = taskWithAttachments?.attachments || [];
+    const finalAttachments = taskWithDetails?.attachments || [];
+
+    // Determine the final assignees
+    const finalAssignees =
+      taskWithDetails?.assignees.map((a) => ({
+        id: a.user.id,
+        name: a.user.name,
+        email: a.user.email,
+        image: a.user.image || undefined,
+      })) || [];
 
     // Transform to Task type
     const updatedTask: Task = {
@@ -574,6 +598,7 @@ export async function updateTask(
       created_at: dayjs(task.createdAt).format("YYYY-MM-DD"),
       updated_at: dayjs(task.updatedAt).format("YYYY-MM-DD"),
       image: task.image,
+      assignees: finalAssignees,
       attachments: finalAttachments.map((a: any) => ({
         id: a.id.toString(),
         taskId: a.taskId.toString(),
