@@ -158,3 +158,50 @@ export async function removeProfilePicture() {
     };
   }
 }
+
+/**
+ * Permanently deletes the user's account and all associated data.
+ *
+ * Handles the `onDelete: Restrict` constraint on `task.createdBy` by first
+ * deleting all tasks the user created, then letting cascading deletes handle
+ * the rest (sessions, accounts, workspace memberships, comments, etc.).
+ */
+export async function deleteAccount() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return {
+        success: false,
+        error: "Unauthorized",
+      };
+    }
+
+    const userId = session.user.id;
+
+    // 1. Delete tasks created by this user (these have onDelete: Restrict on createdById)
+    //    Cascading takes care of task_assignee, comments, attachments, activity_logs for these tasks
+    await prisma.task.deleteMany({
+      where: { createdById: userId },
+    });
+
+    // 2. Delete the user — cascading handles:
+    //    - sessions, accounts (Better Auth)
+    //    - workspace_member, task_assignee, comment, activity_log, sent_invitations
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to delete account:", error);
+    return {
+      success: false,
+      error: "Failed to delete account. Please try again or contact support.",
+    };
+  }
+}

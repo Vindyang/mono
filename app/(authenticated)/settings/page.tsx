@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +19,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   getSettingsData,
   updateProfile,
   removeProfilePicture,
+  deleteAccount,
   SettingsData,
 } from "./componentsaction/actions";
 import { toast } from "sonner";
@@ -40,6 +52,12 @@ export default function SettingsPage() {
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
 
+  // Delete Account States
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [confirmName, setConfirmName] = useState("");
+
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -174,6 +192,45 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+
+    try {
+      const { success, error } = await deleteAccount();
+
+      if (success) {
+        toast.success("Account deleted permanently");
+        setDeleteDialogOpen(false);
+        // Redirect to login — the session is now invalid
+        router.push("/login");
+      } else {
+        throw new Error(error || "Failed to delete account");
+      }
+    } catch (error) {
+      console.error("Delete account error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete account. Please try again or contact support.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    setDeleteDialogOpen(open);
+    if (!open) {
+      // Reset the confirmation input when dialog closes
+      setConfirmName("");
+    }
+  };
+
+  const handleOpenDeleteDialog = () => {
+    setConfirmName("");
+    setDeleteDialogOpen(true);
+  };
+
   if (!mounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -194,7 +251,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="w-full max-w-[400px]">
+        <TabsList>
           <TabsTrigger value="account">Account</TabsTrigger>
         </TabsList>
 
@@ -339,12 +396,76 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="destructive">Delete Account</Button>
+                <Button variant="destructive" onClick={handleOpenDeleteDialog}>
+                  Delete Account
+                </Button>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={handleDeleteDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">
+              Delete Account
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action is permanent and irreversible. Deleting your account
+              will remove all data, sessions, tasks, projects, and workspace
+              memberships.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-6 space-y-3">
+            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+              <li>Remove all your personal data, sessions, and accounts</li>
+              <li>Delete all tasks and projects you own</li>
+              <li>Remove you from all workspaces and teams</li>
+              <li>Delete your profile and avatar</li>
+            </ul>
+            <p className="text-sm font-medium">
+              Type{" "}
+              <span className="font-bold text-foreground">
+                delete my account {data?.user.name}
+              </span>{" "}
+              to confirm.
+            </p>
+          </div>
+          <div className="px-6 pb-2">
+            <Input
+              placeholder='Type "delete my account <your name>" to confirm'
+              value={confirmName}
+              onChange={(e) => setConfirmName(e.target.value)}
+              disabled={isDeleting}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                confirmName !== `delete my account ${data?.user.name}` ||
+                isDeleting
+              }
+              onClick={handleDeleteAccount}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Spinner className="h-4 w-4 mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete My Account"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
