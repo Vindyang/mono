@@ -9,7 +9,7 @@ interface SendInvitationEmailParams {
   inviterName: string;
   workspaceName: string;
   role: string;
-  invitationId: number;
+  invitationToken: string;
   expiresAt: Date;
   projectNames?: string[];
 }
@@ -21,14 +21,14 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
       inviterName,
       workspaceName,
       role,
-      invitationId,
+      invitationToken,
       expiresAt,
       projectNames,
     } = params;
 
     // Generate invitation URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const invitationUrl = `${baseUrl}/invite/${invitationId}`;
+    const invitationUrl = `${baseUrl}/invite/${invitationToken}`;
 
     // Generate email content
     const htmlContent = getInvitationEmailHtml({

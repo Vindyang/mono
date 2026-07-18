@@ -64,6 +64,7 @@ model workspaceMember {
 
 model invitation {
   id          Int                 @id @default(autoincrement())
+  token       String              @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   workspaceId Int
   email       String
   role        WorkspaceMemberRole @default(MEMBER)
