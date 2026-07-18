@@ -389,7 +389,7 @@ export async function createInvitation(
       inviterName: invitation.invitedBy.name,
       workspaceName: invitation.workspace.name,
       role: role,
-      invitationId: invitation.id,
+      invitationToken: invitation.token,
       expiresAt: invitation.expiresAt,
       projectNames: projectNames.length > 0 ? projectNames : undefined,
     });
@@ -590,7 +590,7 @@ export async function resendInvitation(invitationId: string) {
       inviterName: invitation.invitedBy.name,
       workspaceName: invitation.workspace.name,
       role: invitation.role.charAt(0) + invitation.role.slice(1).toLowerCase(),
-      invitationId: invitation.id,
+      invitationToken: invitation.token,
       expiresAt: newExpiresAt,
       projectNames: projectNames.length > 0 ? projectNames : undefined,
     });
@@ -687,132 +687,6 @@ export async function revokeInvitation(invitationId: string) {
     return {
       success: false,
       error: "Failed to revoke invitation",
-    };
-  }
-}
-
-/**
- * Accepts an invitation and creates workspace membership.
- */
-export async function acceptInvitation(invitationId: string) {
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user) {
-      return {
-        success: false,
-        error: "Unauthorized - Please log in",
-      };
-    }
-
-    const userId = session.user.id;
-    const userEmail = session.user.email;
-
-    // Get invitation
-    const invitation = await prisma.invitation.findUnique({
-      where: {
-        id: parseInt(invitationId, 10),
-      },
-      include: {
-        workspace: true,
-      },
-    });
-
-    if (!invitation) {
-      return {
-        success: false,
-        error: "Invitation not found",
-      };
-    }
-
-    // Verify email matches
-    if (invitation.email !== userEmail) {
-      return {
-        success: false,
-        error: "This invitation was sent to a different email address",
-      };
-    }
-
-    // Check if invitation is still pending
-    if (invitation.status !== "PENDING") {
-      return {
-        success: false,
-        error: "This invitation is no longer valid",
-      };
-    }
-
-    // Check if invitation has expired
-    if (new Date() > invitation.expiresAt) {
-      await prisma.invitation.update({
-        where: { id: invitation.id },
-        data: { status: "EXPIRED" },
-      });
-      return {
-        success: false,
-        error: "This invitation has expired",
-      };
-    }
-
-    // Check if user is already a member
-    const existingMember = await prisma.workspaceMember.findFirst({
-      where: {
-        workspaceId: invitation.workspaceId,
-        userId: userId,
-      },
-    });
-
-    if (existingMember) {
-      return {
-        success: false,
-        error: "You are already a member of this workspace",
-      };
-    }
-
-    // Create workspace member
-    const workspaceMember = await prisma.workspaceMember.create({
-      data: {
-        workspaceId: invitation.workspaceId,
-        userId: userId,
-        role: invitation.role,
-        status: "ACTIVE",
-      },
-    });
-
-    // Assign to projects if any
-    if (invitation.projectIds.length > 0) {
-      const projectAssignments = invitation.projectIds.map((projectId) => ({
-        projectId: projectId,
-        workspaceMemberId: workspaceMember.id,
-        role: "MEMBER" as const,
-      }));
-
-      await prisma.projectMember.createMany({
-        data: projectAssignments,
-      });
-    }
-
-    // Update invitation status
-    await prisma.invitation.update({
-      where: {
-        id: invitation.id,
-      },
-      data: {
-        status: "ACCEPTED",
-        acceptedAt: new Date(),
-      },
-    });
-
-    return {
-      success: true,
-      workspaceSlug: invitation.workspace.slug,
-    };
-  } catch (error) {
-    console.error("Failed to accept invitation:", error);
-    return {
-      success: false,
-      error: "Failed to accept invitation",
     };
   }
 }
